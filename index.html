@@ -1,0 +1,386 @@
+<title>Piccadilly Live</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800&display=swap">
+<style>
+/* Layout: an in-carriage strip map. Vertical on phones (Cockfosters at top), horizontal on wide screens. */
+:root{
+  --bg:#f3f4f9; --surface:#ffffff; --fg:#121835; --muted:#596183; --rule:#dde0ec;
+  --line:#0019a8; --train:#121835; --accent:#f2a900;
+  --good:#11793f; --warn:#a9500b; --bad:#bf2530;
+  --font:"Overpass","Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0a0f22; --surface:#121a35; --fg:#e9ecf8; --muted:#9aa3c6; --rule:#252e52;
+  --line:#6680ff; --train:#ffffff; --accent:#ffc63d;
+  --good:#4dc98a; --warn:#f0a35a; --bad:#ff6d73; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0a0f22; --surface:#121a35; --fg:#e9ecf8; --muted:#9aa3c6; --rule:#252e52;
+  --line:#6680ff; --train:#ffffff; --accent:#ffc63d;
+  --good:#4dc98a; --warn:#f0a35a; --bad:#ff6d73; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.45}
+.wrap{max-width:1280px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:#0019a8;color:#fff}
+header.top .wrap{padding-block:14px 12px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px}
+h1{margin:0;font-weight:800;font-size:1.45rem;letter-spacing:.01em;text-wrap:balance}
+h1 span{font-weight:400;opacity:.8}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:.85rem;font-variant-numeric:tabular-nums}
+.pill{display:inline-flex;align-items:center;gap:6px;background:#fff;color:#121835;border-radius:999px;padding:2px 10px 1px;font-weight:600;font-size:.8rem}
+.pill::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--dot,#11793f)}
+.pill.warn{--dot:#c96a12}.pill.bad{--dot:#bf2530}.pill.demo{--dot:#f2a900}
+.notice{background:var(--surface);border-bottom:1px solid var(--rule)}
+.notice .wrap{padding-block:10px;font-size:.88rem;color:var(--muted)}
+.notice b{color:var(--fg)}
+main{padding-block:14px 28px;display:grid;gap:12px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:.84rem;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend svg{overflow:visible}
+.mapbox{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding-block:6px;overflow-x:auto}
+#map{display:block;margin:0 auto;width:100%;height:auto}
+#map.v{max-width:430px}
+.seg{stroke:var(--line);fill:none;stroke-linecap:round;stroke-linejoin:round}
+.tick{stroke:var(--line);stroke-linecap:butt}
+.ic{fill:var(--surface);stroke:var(--fg);stroke-width:2.2}
+.lbl{fill:var(--fg);font-size:11.5px;font-family:var(--font);cursor:pointer}
+.lbl.ic-l{font-weight:600}
+.stn{cursor:pointer}
+.stn:focus{outline:none}
+.stn:focus-visible .hit,.train:focus-visible .hit{stroke:var(--accent);stroke-width:2}
+.stn.sel .lbl{fill:var(--line);font-weight:800}
+.hit{fill:transparent}
+.train{cursor:pointer;transition:transform 2s linear}
+.train.fresh{transition:none}
+.train path{stroke-width:1.6;stroke-linejoin:round}
+.train.w path{fill:var(--train);stroke:var(--surface)}
+.train.e path{fill:var(--surface);stroke:var(--train)}
+.train.sel path{fill:var(--accent);stroke:var(--fg)}
+.train:focus{outline:none}
+@media (prefers-reduced-motion: reduce){.train{transition:none}}
+.foot{margin:0;font-size:.8rem;color:var(--muted);max-width:70ch}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:20;padding-bottom:env(safe-area-inset-bottom,0px);pointer-events:none}
+.sheet .card{pointer-events:auto;margin:0 auto 12px;max-width:440px;width:calc(100% - 2*max(16px,env(safe-area-inset-left,0px)));background:var(--surface);border:1px solid var(--rule);border-radius:12px;box-shadow:0 10px 30px rgba(10,15,40,.22);padding:14px 16px 16px}
+@media (min-width:900px){.sheet .card{margin-right:max(24px,env(safe-area-inset-right,0px))}}
+.sheet .hd{display:flex;align-items:start;justify-content:space-between;gap:10px}
+.sheet h2{margin:0;font-size:1.1rem;font-weight:800;text-wrap:balance}
+.sheet .sub{color:var(--muted);font-size:.85rem;margin-top:2px}
+.sheet button.x{border:0;background:var(--bg);color:var(--fg);border-radius:8px;width:32px;height:32px;font-size:1.1rem;cursor:pointer;flex:none}
+.sheet button.x:focus-visible{outline:2px solid var(--accent)}
+.rows{display:grid;gap:10px;margin-top:12px}
+.dirgrp h3{margin:0 0 4px;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.row{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-top:1px solid var(--rule);font-variant-numeric:tabular-nums}
+.row:first-of-type{border-top:0}
+.row b{font-weight:600}
+.empty{color:var(--muted);font-size:.88rem}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin-top:12px;font-size:.92rem}
+.kv dt{color:var(--muted)}.kv dd{margin:0;min-width:0}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <h1>Piccadilly Live <span>line</span></h1>
+    <div class="meta">
+      <span id="status" class="pill">Connecting</span>
+      <span id="counts"></span>
+      <span id="updated"></span>
+    </div>
+  </div>
+</header>
+<div id="demo" class="notice" hidden><div class="wrap"><b>Showing simulated trains.</b> This preview can't reach TfL's live feed. Open the same page from your own web host (GitHub Pages works) and it switches to real trains automatically.</div></div>
+
+<main class="wrap">
+  <div class="legend">
+    <span><svg width="18" height="10" viewBox="-9 -5 18 10" style="transform:rotate(180deg)"><path d="M-7,-3.5 L3,-3.5 L7,0 L3,3.5 L-7,3.5 Z" fill="var(--train)" stroke="var(--surface)" stroke-width="1.6"/></svg>Westbound, to Heathrow and Uxbridge</span>
+    <span><svg width="18" height="10" viewBox="-9 -5 18 10"><path d="M-7,-3.5 L3,-3.5 L7,0 L3,3.5 L-7,3.5 Z" fill="var(--surface)" stroke="var(--train)" stroke-width="1.6"/></svg>Eastbound, to Cockfosters</span>
+    <span>Tap a train or a station for details</span>
+  </div>
+  <div class="mapbox" id="mapbox"><svg id="map" role="img" aria-label="Piccadilly line strip map with live train positions"></svg></div>
+  <p class="foot">Positions are estimated from TfL arrival predictions, so a train can lag or jump a little between updates. Refreshes every 15 seconds. Powered by TfL Open Data. Built by TudorDesigns.</p>
+</main>
+
+<aside id="sheet" class="sheet" hidden><div class="card" id="card" role="dialog" aria-live="polite"></div></aside>
+
+<script>
+(function(){
+"use strict";
+var API="https://api.tfl.gov.uk/Line/piccadilly/";
+var POLL_MS=15000, STATUS_MS=120000, TICK_MS=2000, SEG_SECS=120, OFF=8;
+
+/* ---------- Network: stations, branches, interchanges ---------- */
+var TRUNK=["Cockfosters","Oakwood","Southgate","Arnos Grove","Bounds Green","Wood Green","Turnpike Lane","Manor House","Finsbury Park","Arsenal","Holloway Road","Caledonian Road","King's Cross St. Pancras","Russell Square","Holborn","Covent Garden","Leicester Square","Piccadilly Circus","Green Park","Hyde Park Corner","Knightsbridge","South Kensington","Gloucester Road","Earl's Court","Barons Court","Hammersmith","Turnham Green","Acton Town"];
+var HEATH=["South Ealing","Northfields","Boston Manor","Osterley","Hounslow East","Hounslow Central","Hounslow West","Hatton Cross"];
+var UXB=["Ealing Common","North Ealing","Park Royal","Alperton","Sudbury Town","Sudbury Hill","South Harrow","Rayners Lane","Eastcote","Ruislip Manor","Ruislip","Ickenham","Hillingdon","Uxbridge"];
+var T23="Heathrow Terminals 2 & 3", T4="Heathrow Terminal 4", T5="Heathrow Terminal 5";
+var IC=new Set(["Finsbury Park","King's Cross St. Pancras","Holborn","Leicester Square","Piccadilly Circus","Green Park","South Kensington","Gloucester Road","Earl's Court","Barons Court","Hammersmith","Turnham Green","Acton Town","Ealing Common","Rayners Lane","Uxbridge",T23,T5]);
+var SHORT={}; SHORT[T23]="Heathrow T2 & 3"; SHORT[T4]="Heathrow T4"; SHORT[T5]="Heathrow T5"; SHORT["King's Cross St. Pancras"]="King's Cross St Pancras";
+var S={}, ORDER=[];
+function add(n,u,v,parent){S[n]={n:n,u:u,v:v,parent:parent,children:[]};ORDER.push(n);}
+TRUNK.forEach(function(n,i){add(n,i,0,i?TRUNK[i-1]:null);});
+HEATH.forEach(function(n,i){add(n,28+i,-1,i?HEATH[i-1]:"Acton Town");});
+add(T4,36,-1.7,"Hatton Cross"); add(T23,37,-1,"Hatton Cross"); add(T5,38,-1,T23);
+UXB.forEach(function(n,i){add(n,28+i,1,i?UXB[i-1]:"Acton Town");});
+ORDER.forEach(function(n){var p=S[n].parent;if(p)S[p].children.push(n);});
+S["Hatton Cross"].children=[T23,T4];
+var EDGES=ORDER.filter(function(n){return S[n].parent;}).map(function(n){return [S[n].parent,n];});
+EDGES.push([T4,T23]);
+function short(n){return SHORT[n]||n;}
+function adjacent(a,b){return S[a].parent===b||S[b].parent===a||(a===T4&&b===T23)||(a===T23&&b===T4);}
+
+/* ---------- Matching TfL's station names ---------- */
+function norm(s){return String(s||"").toLowerCase().replace(/\([^)]*\)/g," ").replace(/underground station|tube station|rail station/g," ").replace(/&/g," and ").replace(/['’.]/g,"").replace(/[^a-z0-9]+/g," ").replace(/\s+/g," ").trim();}
+var ALIAS={};
+ORDER.forEach(function(n){ALIAS[norm(n)]=n;});
+[["heathrow terminals 2 and 3",T23],["heathrow terminals 2 3",T23],["heathrow terminal 2 and 3",T23],["heathrow terminals 123",T23],["heathrow t2 and 3",T23],["terminals 2 and 3",T23],
+ ["heathrow t4",T4],["terminal 4",T4],["heathrow t5",T5],["terminal 5",T5],["kings cross",TRUNK[12]],["kings x",TRUNK[12]],["earls ct",TRUNK[23]]
+].forEach(function(a){ALIAS[a[0]]=a[1];});
+var ALIAS_KEYS=Object.keys(ALIAS).sort(function(a,b){return b.length-a.length;});
+function findAll(text){
+  var t=" "+norm(text)+" ", out=[];
+  ALIAS_KEYS.forEach(function(k){
+    var i=t.indexOf(" "+k+" ");
+    if(i>=0){out.push({pos:i,st:ALIAS[k]});t=t.slice(0,i+1)+k.replace(/./g,"#")+t.slice(i+1+k.length);}
+  });
+  return out.sort(function(a,b){return a.pos-b.pos;}).map(function(o){return o.st;});
+}
+function stationFrom(name){
+  if(!name)return null; var n=norm(name);
+  if(ALIAS[n])return ALIAS[n];
+  var f=findAll(name); return f.length?f[0]:null;
+}
+function parseLoc(loc){
+  var n=norm(loc), kind="other";
+  if(/^between/.test(n))kind="between";
+  else if(/^at /.test(n))kind="at";
+  else if(/^(approaching|near|arriving)/.test(n))kind="approaching";
+  else if(/^(left|departed|departing)/.test(n))kind="left";
+  return {kind:kind,found:findAll(loc)};
+}
+
+/* ---------- Turning predictions into trains ---------- */
+var raw=[], trains=new Map(), fetchedAt=0, anon=0;
+function isEastward(next,dest){var a=S[next].parent;while(a){if(a===dest)return true;a=S[a].parent;}return false;}
+function dirOf(p,next,dest){
+  var pl=String(p.platformName||"").toLowerCase();
+  if(/west/.test(pl))return "W";
+  if(/east/.test(pl))return "E";
+  if(dest&&next){ if(dest===next)return S[dest].u<=12?"E":"W"; return isEastward(next,dest)?"E":"W"; }
+  return "W";
+}
+function makeTrain(key,p){
+  var next=p._st, dest=p._dest, dir=dirOf(p,next,dest), L=parseLoc(p.currentLocation||"");
+  var prev=null, mode="move", others=L.found.filter(function(s){return s!==next;});
+  if(L.kind==="at"){ if(!L.found.length||L.found[0]===next)mode="at"; else {prev=L.found[0];mode="atprev";} }
+  else if(L.kind==="approaching"&&L.found[0]===next&&p.timeToStation<45){mode="at";}
+  else if(others.length)prev=others[0];
+  if(prev&&!adjacent(prev,next)){prev=null;if(mode==="atprev")mode="move";}
+  if(!prev)prev=dir==="W"?S[next].parent:S[next].children[0];
+  return {key:key,dir:dir,next:next,prev:prev||null,tts:p.timeToStation,mode:mode,
+    seg:mode==="atprev"?Math.max(p.timeToStation,90):SEG_SECS,
+    dest:dest, destRaw:p.destinationName||p.towards||"", loc:p.currentLocation||"", plat:p.platformName||""};
+}
+function ingest(list,at){
+  raw=[];anon=0;var best=new Map();
+  list.forEach(function(p){
+    var st=stationFrom(p.stationName); if(!st)return;
+    p._st=st; p._dest=stationFrom(p.destinationName||p.towards||""); raw.push(p);
+    var key=String(p.vehicleId||"").trim();
+    if(!key||/^0+$/.test(key)){anon++;return;}
+    var b=best.get(key); if(!b||p.timeToStation<b.timeToStation)best.set(key,p);
+  });
+  trains=new Map(); best.forEach(function(p,key){trains.set(key,makeTrain(key,p));});
+  fetchedAt=at;
+}
+
+/* ---------- Layout ---------- */
+var svg=document.getElementById("map"), box=document.getElementById("mapbox"), NS="http://www.w3.org/2000/svg";
+var LY=null, trainLayer=null, gTrains=new Map(), selTrain=null, selStn=null;
+function layout(){
+  var w=box.clientWidth;
+  if(w>=860){
+    var W=Math.max(860,w-2), xR=W-80, xL=34, sp=(xR-xL)/41, ty=176;
+    return {mode:"h",W:W,H:372,sw:5,
+      pt:function(n){var s=S[n];return {x:xR-s.u*sp,y:ty-s.v*64};},
+      side:function(n){return (S[n].v<0&&n!==T23&&n!==T5)?1:-1;}};
+  }
+  return {mode:"v",W:360,H:28+41*24+28,sw:6,
+    pt:function(n){var s=S[n];return {x:150+s.v*32,y:28+s.u*24};},
+    side:function(n){return S[n].v<0?-1:1;}};
+}
+function el(tag,attrs,parent){var e=document.createElementNS(NS,tag);for(var k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function drawMap(){
+  LY=layout(); svg.innerHTML=""; gTrains.clear();
+  svg.setAttribute("viewBox","0 0 "+LY.W+" "+LY.H); svg.setAttribute("class",LY.mode);
+  var lines=el("g",{},svg);
+  EDGES.forEach(function(e){var a=LY.pt(e[0]),b=LY.pt(e[1]);el("path",{"class":"seg","stroke-width":LY.sw,d:"M"+a.x+","+a.y+"L"+b.x+","+b.y},lines);});
+  var stns=el("g",{},svg);
+  ORDER.forEach(function(n){
+    var p=LY.pt(n), sd=LY.side(n), g=el("g",{"class":"stn"+(n===selStn?" sel":""),"data-stn":n,tabindex:"0",role:"button","aria-label":short(n)+" arrivals"},stns);
+    var ic=IC.has(n), lbl;
+    if(LY.mode==="v"){
+      el("rect",{"class":"hit",x:sd>0?p.x-12:p.x-130,y:p.y-11,width:142,height:22},g);
+      if(ic)el("circle",{"class":"ic",cx:p.x,cy:p.y,r:5.5},g);
+      else el("line",{"class":"tick","stroke-width":3,x1:p.x,y1:p.y,x2:p.x+sd*7,y2:p.y},g);
+      lbl=el("text",{"class":"lbl"+(ic?" ic-l":""),x:p.x+sd*20,y:p.y+4,"text-anchor":sd>0?"start":"end"},g);
+    }else{
+      el("circle",{"class":"hit",cx:p.x,cy:p.y,r:12},g);
+      if(ic)el("circle",{"class":"ic",cx:p.x,cy:p.y,r:5},g);
+      else el("line",{"class":"tick","stroke-width":3,x1:p.x,y1:p.y,x2:p.x,y2:p.y+sd*7},g);
+      var lx=p.x+3, ly=p.y+sd*17;
+      lbl=el("text",{"class":"lbl"+(ic?" ic-l":""),x:lx,y:ly,transform:"rotate("+(sd<0?-45:45)+" "+lx+" "+ly+")"},g);
+      if(sd>0)lbl.setAttribute("dy","0.7em");
+    }
+    lbl.textContent=short(n);
+  });
+  trainLayer=el("g",{"class":"trains"},svg);
+  render(true);
+}
+
+/* ---------- Placing trains ---------- */
+function trainGeom(t,now){
+  var el=(now-fetchedAt)/1000, tts=Math.max(0,t.tts-el), p;
+  if(t.mode==="at"||tts<12||!t.prev)p=1;
+  else p=Math.min(0.94,Math.max(t.mode==="atprev"?0:0.08,1-tts/t.seg));
+  var B=LY.pt(t.next), A=t.prev?LY.pt(t.prev):B;
+  var other=t.prev||S[t.next].parent||S[t.next].children[0];
+  var O=LY.pt(other), nE=S[t.next].u<=S[other].u;
+  var E=nE?B:O, Wp=nE?O:B, dx=Wp.x-E.x, dy=Wp.y-E.y, len=Math.hypot(dx,dy)||1; dx/=len; dy/=len;
+  var nx=-dy, ny=dx, side=t.dir==="W"?-1:1;
+  var x=A.x+(B.x-A.x)*p+nx*side*OFF, y=A.y+(B.y-A.y)*p+ny*side*OFF;
+  var tx=t.dir==="W"?dx:-dx, ty=t.dir==="W"?dy:-dy;
+  return {x:x,y:y,a:Math.atan2(ty,tx)*180/Math.PI,tts:tts};
+}
+function render(fresh){
+  if(!LY||!trainLayer)return;
+  var now=Date.now(), seen=new Set();
+  trains.forEach(function(t,key){
+    seen.add(key);
+    var g=gTrains.get(key), isNew=!g;
+    if(isNew){
+      g=el("g",{"class":"train fresh","data-train":key,tabindex:"0",role:"button"},trainLayer);
+      el("circle",{"class":"hit",r:11},g);
+      el("path",{d:"M-7,-3.5 L3,-3.5 L7,0 L3,3.5 L-7,3.5 Z"},g);
+      gTrains.set(key,g);
+    }
+    var gm=trainGeom(t,now);
+    g.setAttribute("class","train "+(t.dir==="W"?"w":"e")+(key===selTrain?" sel":"")+((isNew||fresh)?" fresh":""));
+    g.setAttribute("aria-label","Train to "+destName(t)+", next stop "+short(t.next));
+    g.style.transform="translate("+gm.x.toFixed(1)+"px,"+gm.y.toFixed(1)+"px) rotate("+gm.a.toFixed(0)+"deg)";
+    if(isNew||fresh){void g.getBoundingClientRect();requestAnimationFrame(function(){g.classList.remove("fresh");});}
+  });
+  gTrains.forEach(function(g,key){if(!seen.has(key)){g.remove();gTrains.delete(key);}});
+  if(selTrain&&!trains.has(selTrain))closeSheet();
+  var w=0,e=0;trains.forEach(function(t){t.dir==="W"?w++:e++;});
+  document.getElementById("counts").textContent=trains.size?(w+" westbound · "+e+" eastbound"):"";
+  if(fetchedAt)document.getElementById("updated").textContent="Updated "+new Date(fetchedAt).toLocaleTimeString("en-GB");
+  if(!document.getElementById("sheet").hidden)refreshSheet();
+}
+
+/* ---------- Details sheet ---------- */
+var sheet=document.getElementById("sheet"), card=document.getElementById("card");
+function destName(t){return t.dest?short(t.dest):(t.destRaw?t.destRaw.replace(/ Underground Station/i,""):"Check front of train");}
+function mins(s){var m=Math.round(s/60);return s<30?"Due":(m<1?"1 min":m+" min");}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function refreshSheet(){
+  var now=Date.now(), el=(now-fetchedAt)/1000, h="";
+  if(selTrain&&trains.has(selTrain)){
+    var t=trains.get(selTrain), tts=Math.max(0,t.tts-el);
+    h='<div class="hd"><div><h2>Train to '+esc(destName(t))+'</h2><div class="sub">'+(t.dir==="W"?"Westbound":"Eastbound")+' · train '+esc(t.key)+'</div></div><button class="x" data-close aria-label="Close">×</button></div>'+
+      '<dl class="kv"><dt>Next stop</dt><dd><b>'+esc(short(t.next))+'</b> · '+mins(tts)+'</dd>'+
+      (t.loc?'<dt>Reported</dt><dd>'+esc(t.loc)+'</dd>':'')+'</dl>';
+  }else if(selStn){
+    var list=raw.filter(function(p){return p._st===selStn;}).map(function(p){
+      var key=String(p.vehicleId||""), t=trains.get(key);
+      return {tts:Math.max(0,p.timeToStation-el),dest:p._dest?short(p._dest):String(p.destinationName||p.towards||"Check front of train").replace(/ Underground Station/i,""),dir:t?t.dir:dirOf(p,p._st,p._dest)};
+    }).sort(function(a,b){return a.tts-b.tts;});
+    function grp(d,label){
+      var r=list.filter(function(x){return x.dir===d;}).slice(0,4);
+      return '<div class="dirgrp"><h3>'+label+'</h3>'+(r.length?r.map(function(x){return '<div class="row"><span>'+esc(x.dest)+'</span><b>'+mins(x.tts)+'</b></div>';}).join(""):'<div class="empty">No trains listed</div>')+'</div>';
+    }
+    h='<div class="hd"><div><h2>'+esc(short(selStn))+'</h2><div class="sub">Next trains</div></div><button class="x" data-close aria-label="Close">×</button></div>'+
+      '<div class="rows">'+grp("W","Westbound")+grp("E","Eastbound")+'</div>';
+  }else{closeSheet();return;}
+  card.innerHTML=h;
+}
+function openSheet(){sheet.hidden=false;refreshSheet();}
+function closeSheet(){selTrain=null;selStn=null;sheet.hidden=true;markSel();}
+function markSel(){
+  gTrains.forEach(function(g,k){g.classList.toggle("sel",k===selTrain);});
+  svg.querySelectorAll(".stn").forEach(function(g){g.classList.toggle("sel",g.getAttribute("data-stn")===selStn);});
+}
+function pick(target){
+  var tg=target.closest("[data-train]"), sg=target.closest("[data-stn]");
+  if(tg){selTrain=tg.getAttribute("data-train");selStn=null;}
+  else if(sg){selStn=sg.getAttribute("data-stn");selTrain=null;}
+  else return;
+  markSel();openSheet();
+}
+svg.addEventListener("click",function(e){pick(e.target);});
+svg.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();pick(e.target);}});
+card.addEventListener("click",function(e){if(e.target.closest("[data-close]"))closeSheet();});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!sheet.hidden)closeSheet();});
+
+/* ---------- Demo simulation (used only when TfL can't be reached) ---------- */
+function makeSim(){
+  var seed=20261022; function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647;}
+  function path(east,west){var out=[],s=west;while(s){out.push(s);if(s===east)break;s=S[s].parent;}return out.reverse();}
+  var routes=[["Cockfosters",T5,10],["Cockfosters",T4,7],["Cockfosters","Uxbridge",8],["Arnos Grove","Northfields",6],["Cockfosters","Rayners Lane",5]];
+  var SPEED=1/105, list=[], id=301, t0=Date.now();
+  routes.forEach(function(r){var p=path(r[0],r[1]),L=p.length-1;for(var i=0;i<r[2];i++){
+    var idx=Math.round(rnd()*L*4)/4, w=rnd()<0.5;
+    list.push({id:String(id++),p:p,L:L,ph:w?idx:2*L-idx});}});
+  function nm(n){return n+" Underground Station";}
+  return function(now){
+    var out=[], d=(now-t0)/1000*SPEED;
+    list.forEach(function(t){
+      var ph=(t.ph+d)%(2*t.L), W=ph<=t.L, idx=W?ph:2*t.L-ph, r=Math.round(idx), atS=Math.abs(idx-r)<0.06;
+      var dest=W?t.p[t.L]:t.p[0], plat=W?"Westbound - Platform 1":"Eastbound - Platform 2", loc;
+      if(atS)loc="At "+short(t.p[r])+" Platform "+(W?1:2);
+      else loc="Between "+short(t.p[W?Math.floor(idx):Math.ceil(idx)])+" and "+short(t.p[W?Math.ceil(idx):Math.floor(idx)]);
+      var start=atS?r:(W?Math.ceil(idx):Math.floor(idx));
+      for(var k=0;k<5;k++){var j=W?start+k:start-k;if(j<0||j>t.L)break;
+        out.push({vehicleId:t.id,stationName:nm(t.p[j]),destinationName:nm(dest),platformName:plat,currentLocation:loc,timeToStation:Math.round(Math.abs(j-idx)/SPEED)});}
+    });
+    return out;
+  };
+}
+
+/* ---------- Polling ---------- */
+var demo=/demo/.test(location.hash), sim=null, failures=0, statusEl=document.getElementById("status");
+function setStatus(text,cls){statusEl.textContent=text;statusEl.className="pill "+(cls||"");}
+function getJSON(url){
+  var ac=new AbortController(), to=setTimeout(function(){ac.abort();},10000);
+  return fetch(url,{signal:ac.signal,cache:"no-store"}).then(function(r){clearTimeout(to);if(!r.ok)throw new Error("HTTP "+r.status);return r.json();});
+}
+function enterDemo(){
+  demo=true; sim=sim||makeSim();
+  document.getElementById("demo").hidden=false; setStatus("Demo data","demo");
+}
+function poll(){
+  if(demo){ingest(sim(Date.now()),Date.now());render(false);return;}
+  getJSON(API+"Arrivals").then(function(list){failures=0;ingest(list,Date.now());render(false);})
+  .catch(function(){
+    failures++;
+    if(!fetchedAt){enterDemo();poll();}
+    else setStatus("Reconnecting","warn");
+  });
+}
+function pollStatus(){
+  if(demo)return;
+  getJSON(API+"Status").then(function(d){
+    var s=(d&&d[0]&&d[0].lineStatuses&&d[0].lineStatuses[0])||{}, sev=s.statusSeverity, txt=s.statusSeverityDescription||"Status unknown";
+    setStatus(txt,sev===10?"":(sev>=9?"warn":"bad"));
+    statusEl.title=s.reason||"";
+  }).catch(function(){});
+}
+
+var rt; window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(function(){var m=box.clientWidth>=860?"h":"v";if(!LY||m!==LY.mode||m==="h")drawMap();},200);});
+drawMap();
+if(demo)enterDemo();
+poll(); pollStatus();
+setInterval(function(){if(!document.hidden)poll();},POLL_MS);
+setInterval(function(){if(!document.hidden)pollStatus();},STATUS_MS);
+setInterval(function(){if(!document.hidden)render(false);},TICK_MS);
+document.addEventListener("visibilitychange",function(){if(!document.hidden){poll();}});
+})();
+</script>
