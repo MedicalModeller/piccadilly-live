@@ -1,3 +1,4 @@
+<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
 <title>Piccadilly Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -33,6 +34,11 @@ h1 span{font-weight:400;opacity:.8}
 .notice{background:var(--surface);border-bottom:1px solid var(--rule)}
 .notice .wrap{padding-block:10px;font-size:.88rem;color:var(--muted)}
 .notice b{color:var(--fg)}
+.alert{background:var(--surface);border-bottom:1px solid var(--rule);border-left:5px solid var(--sev,var(--warn))}
+.alert.bad{--sev:var(--bad)}
+.alert .wrap{padding-block:10px;display:grid;gap:6px;font-size:.92rem;max-width:1280px}
+.alert p{margin:0;max-width:80ch}
+.alert b{font-weight:800;color:var(--sev,var(--warn))}
 main{padding-block:14px 28px;display:grid;gap:12px}
 .legend{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:.84rem;color:var(--muted);align-items:center}
 .legend span{display:inline-flex;align-items:center;gap:7px}
@@ -53,7 +59,7 @@ main{padding-block:14px 28px;display:grid;gap:12px}
 .train{cursor:pointer;transition:transform 2s linear}
 .train.fresh{transition:none}
 .train path{stroke-width:1.6;stroke-linejoin:round}
-.train.w path{fill:var(--train);stroke:var(--surface)}
+.train.w path{fill:var(--train);stroke:var(--surface);transform:scale(1.3)}
 .train.e path{fill:var(--surface);stroke:var(--train)}
 .train.sel path{fill:var(--accent);stroke:var(--fg)}
 .train:focus{outline:none}
@@ -87,11 +93,12 @@ main{padding-block:14px 28px;display:grid;gap:12px}
     </div>
   </div>
 </header>
+<div id="alert" class="alert" hidden role="status"><div class="wrap" id="alertText"></div></div>
 <div id="demo" class="notice" hidden><div class="wrap"><b>Showing simulated trains.</b> This preview can't reach TfL's live feed. Open the same page from your own web host (GitHub Pages works) and it switches to real trains automatically.</div></div>
 
 <main class="wrap">
   <div class="legend">
-    <span><svg width="18" height="10" viewBox="-9 -5 18 10" style="transform:rotate(180deg)"><path d="M-7,-3.5 L3,-3.5 L7,0 L3,3.5 L-7,3.5 Z" fill="var(--train)" stroke="var(--surface)" stroke-width="1.6"/></svg>Westbound, to Heathrow and Uxbridge</span>
+    <span><svg width="20" height="12" viewBox="-10 -6 20 12" style="transform:rotate(180deg)"><path transform="scale(1.3)" d="M-7,-3.5 L3,-3.5 L7,0 L3,3.5 L-7,3.5 Z" fill="var(--train)" stroke="var(--surface)" stroke-width="1.6"/></svg>Westbound, to Heathrow and Uxbridge</span>
     <span><svg width="18" height="10" viewBox="-9 -5 18 10"><path d="M-7,-3.5 L3,-3.5 L7,0 L3,3.5 L-7,3.5 Z" fill="var(--surface)" stroke="var(--train)" stroke-width="1.6"/></svg>Eastbound, to Cockfosters</span>
     <span>Tap a train or a station for details</span>
   </div>
@@ -368,9 +375,17 @@ function poll(){
 function pollStatus(){
   if(demo)return;
   getJSON(API+"Status").then(function(d){
-    var s=(d&&d[0]&&d[0].lineStatuses&&d[0].lineStatuses[0])||{}, sev=s.statusSeverity, txt=s.statusSeverityDescription||"Status unknown";
-    setStatus(txt,sev===10?"":(sev>=9?"warn":"bad"));
-    statusEl.title=s.reason||"";
+    var all=(d&&d[0]&&d[0].lineStatuses)||[], s=all[0]||{}, sev=s.statusSeverity, txt=s.statusSeverityDescription||"Status unknown";
+    var cls=sev===10?"":(sev>=9?"warn":"bad");
+    setStatus(txt,cls);
+    var seen=new Set(), notes=all.filter(function(x){var r=String(x.reason||"").trim();if(!r||x.statusSeverity===10||seen.has(r))return false;seen.add(r);return true;});
+    var box=document.getElementById("alert"), tx=document.getElementById("alertText");
+    if(notes.length){
+      tx.innerHTML=notes.map(function(x){var r=String(x.reason).trim(),d=x.statusSeverityDescription||"";
+        r=r.replace(/^piccadilly line:\s*/i,"");
+        var lead=r.toLowerCase().indexOf(d.toLowerCase())===0?"":"<b>"+esc(d)+"</b> ";return "<p>"+lead+esc(r)+"</p>";}).join("");
+      box.className="alert"+(cls==="bad"?" bad":""); box.hidden=false;
+    }else box.hidden=true;
   }).catch(function(){});
 }
 
@@ -384,3 +399,5 @@ setInterval(function(){if(!document.hidden)render(false);},TICK_MS);
 document.addEventListener("visibilitychange",function(){if(!document.hidden){poll();}});
 })();
 </script>
+
+</body></html>
