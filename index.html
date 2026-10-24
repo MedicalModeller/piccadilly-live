@@ -49,7 +49,7 @@ main{padding-block:14px 28px;display:grid;gap:12px}
 .seg{stroke:var(--line);fill:none;stroke-linecap:round;stroke-linejoin:round}
 .tick{stroke:var(--line);stroke-linecap:butt}
 .ic{fill:var(--surface);stroke:var(--fg);stroke-width:2.2}
-.lbl{fill:var(--fg);font-size:11.5px;font-family:var(--font);cursor:pointer}
+.lbl{fill:var(--fg);font-size:11.5px;font-family:var(--font);cursor:pointer;paint-order:stroke;stroke:var(--surface);stroke-width:3.5px;stroke-linejoin:round}
 .lbl.ic-l{font-weight:600}
 .stn{cursor:pointer}
 .stn:focus{outline:none}
@@ -83,11 +83,14 @@ main{padding-block:14px 28px;display:grid;gap:12px}
 .kv dt{color:var(--muted)}.kv dd{margin:0;min-width:0}
 body[data-line="victoria"]{--line:#29b0e8;--head:#1787bd}
 body[data-line="central"]{--line:#d2042d;--head:#b00327}
+body[data-line="northern"]{--line:#15151a;--head:#15151a}
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]) body[data-line="victoria"]{--line:#62caf5}
-  :root:not([data-theme="light"]) body[data-line="central"]{--line:#ff4d6d}}
+  :root:not([data-theme="light"]) body[data-line="central"]{--line:#ff4d6d}
+  :root:not([data-theme="light"]) body[data-line="northern"]{--line:#cfd3df}}
 :root[data-theme="dark"] body[data-line="victoria"]{--line:#62caf5}
 :root[data-theme="dark"] body[data-line="central"]{--line:#ff4d6d}
+:root[data-theme="dark"] body[data-line="northern"]{--line:#cfd3df}
 .titlebox{display:grid;gap:8px}
 .lines{display:flex;flex-wrap:wrap;gap:6px}
 .lines button{font:600 .85rem/1 var(--font);color:#fff;background:transparent;border:1.5px solid rgba(255,255,255,.7);border-radius:999px;padding:7px 13px 5px;cursor:pointer}
@@ -105,6 +108,7 @@ body[data-line="central"]{--line:#d2042d;--head:#b00327}
         <button type="button" id="btn-piccadilly" data-line="piccadilly" aria-pressed="true"><span class="sw" style="background:#0019a8"></span>Piccadilly</button>
         <button type="button" id="btn-victoria" data-line="victoria" aria-pressed="false"><span class="sw" style="background:#29b0e8"></span>Victoria</button>
         <button type="button" id="btn-central" data-line="central" aria-pressed="false"><span class="sw" style="background:#d2042d"></span>Central</button>
+        <button type="button" id="btn-northern" data-line="northern" aria-pressed="false"><span class="sw" style="background:#15151a"></span>Northern</button>
       </div>
     </div>
     <div class="meta">
@@ -162,6 +166,28 @@ var LINES={
       alias:[["walthamstow","Walthamstow Central"],["highbury","Highbury & Islington"]],
       sim:[["Walthamstow Central","Brixton",16],["Seven Sisters","Brixton",3]]};
   })(),
+  northern:(function(){
+    var L=[], EB="Euston (Bank)", EC="Euston (CX)";
+    chain(L,["High Barnet","Totteridge & Whetstone","Woodside Park","West Finchley"],-1,1,1,null);
+    L.push(["Finchley Central",4,1,"West Finchley"],["Mill Hill East",3,1.9,"Finchley Central"]);
+    chain(L,["East Finchley","Highgate","Archway","Tufnell Park","Kentish Town"],5,1,1,"Finchley Central");
+    L.push(["Camden Town",10,0,"Kentish Town"]);
+    chain(L,["Chalk Farm","Belsize Park","Hampstead","Golders Green","Brent Cross","Hendon Central","Colindale","Burnt Oak","Edgware"],9,-1,-1,"Camden Town");
+    chain(L,[EB,KX,"Angel","Old Street","Moorgate","Bank","London Bridge","Borough","Elephant & Castle"],11,1,1,"Camden Town");
+    chain(L,["Mornington Crescent",EC,"Warren Street","Goodge Street","Tottenham Court Road","Leicester Square","Charing Cross","Embankment","Waterloo"],11,1,-1,"Camden Town");
+    L.push(["Kennington",20,0,"Elephant & Castle"]);
+    chain(L,["Oval","Stockwell","Clapham North","Clapham Common","Clapham South","Balham","Tooting Bec","Tooting Broadway","Colliers Wood","South Wimbledon","Morden"],21,1,0,"Kennington");
+    chain(L,["Nine Elms","Battersea Power Station"],21,1,-1,"Kennington");
+    var split={}; split[EB]={bank:EB,cx:EC}; split[EC]={bank:EB,cx:EC};
+    return {name:"Northern",stations:L,extra:[["Waterloo","Kennington"]],childOrder:{},
+      ic:["Kentish Town",EB,EC,KX,"Old Street","Moorgate","Bank","London Bridge","Elephant & Castle","Warren Street","Tottenham Court Road","Leicester Square","Charing Cross","Embankment","Waterloo","Stockwell","Balham"],
+      dirs:["Southbound","Northbound"],legend:["to Morden and Battersea","to Edgware, High Barnet and Mill Hill East"],labelUp:[],
+      alias:[["euston",EB],["battersea","Battersea Power Station"],["totteridge","Totteridge & Whetstone"]],
+      split:split, vw:400, vcx:180, hpos:{"Mill Hill East":[3,0.4]},
+      branch:{cx:["Mornington Crescent","Warren Street","Goodge Street","Tottenham Court Road","Leicester Square","Charing Cross","Embankment","Waterloo","Nine Elms","Battersea Power Station"],
+              bank:[KX,"Angel","Old Street","Moorgate","Bank","London Bridge","Borough","Elephant & Castle"]},
+      sim:[["High Barnet","Morden",7],["Edgware","Morden",7],["Edgware","Battersea Power Station",5],["High Barnet","Battersea Power Station",4],["Mill Hill East","Kennington",2]]};
+  })(),
   central:(function(){
     var L=[];
     chain(L,["Epping","Theydon Bois","Debden","Loughton","Buckhurst Hill","Woodford"],0,1,1,null);
@@ -177,16 +203,16 @@ var LINES={
       sim:[["Epping","West Ruislip",8],["Epping","Ealing Broadway",8],["Hainault","Ealing Broadway",7],["Woodford","Hainault",2],["Loughton","White City",3]]};
   })()
 };
-var SHORT={}; SHORT[T23]="Heathrow T2 & 3"; SHORT[T4]="Heathrow T4"; SHORT[T5]="Heathrow T5"; SHORT[KX]="King's Cross St Pancras";
+var SHORT={}; SHORT[T23]="Heathrow T2 & 3"; SHORT[T4]="Heathrow T4"; SHORT[T5]="Heathrow T5"; SHORT[KX]="King's Cross St Pancras"; SHORT["Euston (Bank)"]="Euston"; SHORT["Euston (CX)"]="Euston"; SHORT["Battersea Power Station"]="Battersea Power Stn";
 function short(n){return SHORT[n]||n;}
 
 /* ---------- Current network (rebuilt when the line changes) ---------- */
-var LINE=null, LINE_ID="", S={}, ORDER=[], EDGES=[], NB={}, DEPTH={}, MAXD=0, NH={}, IC=new Set(), ALIAS={}, ALIAS_KEYS=[], WORDS=["westbound","eastbound","northbound","southbound"];
+var minU0=0, LINE=null, LINE_ID="", S={}, ORDER=[], EDGES=[], NB={}, DEPTH={}, MAXD=0, NH={}, IC=new Set(), ALIAS={}, ALIAS_KEYS=[], WORDS=["westbound","eastbound","northbound","southbound"];
 function norm(s){return String(s||"").toLowerCase().replace(/\([^)]*\)/g," ").replace(/underground station|tube station|rail station/g," ").replace(/&/g," and ").replace(/['’.]/g,"").replace(/[^a-z0-9]+/g," ").replace(/\s+/g," ").trim();}
 function buildNetwork(id){
   LINE_ID=id; LINE=LINES[id]; S={}; ORDER=[]; EDGES=[]; NB={}; DEPTH={}; NH={};
   LINE.stations.forEach(function(r){S[r[0]]={n:r[0],u:r[1],v:r[2],parent:r[3],children:[]};ORDER.push(r[0]);NB[r[0]]=[];});
-  var minU=Infinity; ORDER.forEach(function(n){minU=Math.min(minU,S[n].u);}); ORDER.forEach(function(n){S[n].u-=minU;});
+  var minU=Infinity; ORDER.forEach(function(n){minU=Math.min(minU,S[n].u);}); ORDER.forEach(function(n){S[n].u-=minU;}); minU0=minU;
   ORDER.forEach(function(n){var p=S[n].parent;if(p){S[p].children.push(n);EDGES.push([p,n]);}});
   Object.keys(LINE.childOrder).forEach(function(k){S[k].children=LINE.childOrder[k].slice();});
   LINE.extra.forEach(function(e){EDGES.push(e);});
@@ -247,6 +273,7 @@ function defaultPrev(next,dest,away){
 }
 function makeTrain(key,p){
   var next=p._st, dest=p._dest, away=awayOf(p,next,dest), L=parseLoc(p.currentLocation||"");
+  if(p._hint)L.found=L.found.map(function(x){return fixSt(x,p._hint);});
   var prev=null, mode="move", others=L.found.filter(function(s){return s!==next;});
   if(L.kind==="at"){ if(!L.found.length||L.found[0]===next)mode="at"; else {prev=L.found[0];mode="atprev";} }
   else if(L.kind==="approaching"&&L.found[0]===next&&p.timeToStation<45){mode="at";}
@@ -257,10 +284,24 @@ function makeTrain(key,p){
     seg:mode==="atprev"?Math.max(p.timeToStation,90):SEG_SECS,
     dest:dest,destRaw:p.destinationName||p.towards||"",loc:p.currentLocation||""};
 }
+function routeHint(p,others){
+  var t=String((p.towards||"")+" "+(p.destinationName||"")).toLowerCase();
+  if(/\bcx\b|charing/.test(t))return "cx";
+  if(/\bbank\b/.test(t)&&!/^bank\b/.test(norm(p.destinationName)))return "bank";
+  if(LINE.branch&&others)for(var i=0;i<others.length;i++){
+    var o=stationFrom(others[i].stationName);
+    if(LINE.branch.cx.indexOf(o)>=0)return "cx";
+    if(LINE.branch.bank.indexOf(o)>=0)return "bank";
+  }
+  return "";
+}
+function fixSt(st,hint){return (st&&LINE.split&&LINE.split[st]&&hint)?LINE.split[st][hint]:st;}
 function ingest(list,at){
-  raw=[];var best=new Map();
+  raw=[];var best=new Map(), byV={};
+  if(LINE.split)list.forEach(function(p){var k=String(p.vehicleId||"").trim();if(k&&!/^0+$/.test(k))(byV[k]=byV[k]||[]).push(p);});
   list.forEach(function(p){
     var st=stationFrom(p.stationName); if(!st)return;
+    if(LINE.split){p._hint=routeHint(p,byV[String(p.vehicleId||"").trim()]);st=fixSt(st,p._hint);}
     p._st=st; p._dest=stationFrom(p.destinationName||p.towards||""); raw.push(p);
     var key=String(p.vehicleId||"").trim();
     if(!key||/^0+$/.test(key))return;
@@ -277,13 +318,15 @@ function layout(){
   var w=box.clientWidth, maxU=0, vmin=0, vmax=0, up=new Set(LINE.labelUp);
   ORDER.forEach(function(n){var s=S[n];maxU=Math.max(maxU,s.u);vmin=Math.min(vmin,s.v);vmax=Math.max(vmax,s.v);});
   if(w>=860){
+    var hp=LINE.hpos||{}, U=function(n){return hp[n]?hp[n][0]-minU0:S[n].u;}, V=function(n){return hp[n]?hp[n][1]:S[n].v;};
+    vmax=0; ORDER.forEach(function(n){vmax=Math.max(vmax,V(n));});
     var W=Math.max(860,w-2), xR=W-125, xL=34, sp=(xR-xL)/maxU, ty=120+vmax*64;
     return {mode:"h",W:W,H:Math.round(ty-vmin*64+(vmin<0?120:40)),sw:5,
-      pt:function(n){var s=S[n];return {x:xR-s.u*sp,y:ty-s.v*64};},
-      side:function(n){return (S[n].v<0&&!up.has(n))?1:-1;}};
+      pt:function(n){return {x:xR-U(n)*sp,y:ty-V(n)*64};},
+      side:function(n){return (V(n)<0.5&&V(n)!==0&&!up.has(n))?1:-1;}};
   }
-  var cx=vmin<0?150:110;
-  return {mode:"v",W:360,H:28+maxU*24+28,sw:6,
+  var cx=LINE.vcx||(vmin<0?150:110);
+  return {mode:"v",W:LINE.vw||360,H:28+maxU*24+28,sw:6,
     pt:function(n){var s=S[n];return {x:cx+s.v*32,y:28+s.u*24};},
     side:function(n){return S[n].v<0?-1:1;}};
 }
@@ -412,7 +455,7 @@ function makeSim(){
   var SPEED=1/105, list=[], id=301, t0=Date.now();
   LINE.sim.forEach(function(r){
     var p=pathBetween(r[0],r[1]), L=p.length-1, fwd=DEPTH[r[1]]>DEPTH[r[0]]?0:1;
-    for(var i=0;i<r[2];i++){var idx=Math.round(rnd()*L*4)/4, w=rnd()<0.5;list.push({id:String(id++),p:p,L:L,fwd:fwd,ph:w?idx:2*L-idx});}
+    for(var i=0;i<r[2];i++){var idx=Math.round(rnd()*L*4)/4, w=rnd()<0.5;list.push({id:String(id++),p:p,L:L,fwd:fwd,ph:w?idx:2*L-idx,via:p.indexOf("Warren Street")>=0?"CX":(p.indexOf("Moorgate")>=0?"Bank":"")});}
   });
   function nm(n){return n+" Underground Station";}
   return function(now){
@@ -424,7 +467,7 @@ function makeSim(){
       else loc="Between "+short(t.p[W?Math.floor(idx):Math.ceil(idx)])+" and "+short(t.p[W?Math.ceil(idx):Math.floor(idx)]);
       var start=atS?r:(W?Math.ceil(idx):Math.floor(idx));
       for(var k=0;k<5;k++){var j=W?start+k:start-k;if(j<0||j>t.L)break;
-        out.push({vehicleId:t.id,stationName:nm(t.p[j]),destinationName:nm(dest),platformName:plat,currentLocation:loc,timeToStation:Math.round(Math.abs(j-idx)/SPEED)});}
+        out.push({vehicleId:t.id,stationName:nm(t.p[j]),destinationName:nm(dest),towards:t.via?dest+" via "+t.via:dest,platformName:plat,currentLocation:loc,timeToStation:Math.round(Math.abs(j-idx)/SPEED)});}
     });
     return out;
   };
@@ -488,7 +531,7 @@ document.getElementById("lines").addEventListener("click",function(e){
 });
 
 var rt; window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(function(){var m=box.clientWidth>=860?"h":"v";if(!LY||m!==LY.mode||m==="h")drawMap();},200);});
-var start="piccadilly", hm=(location.hash||"").toLowerCase().match(/piccadilly|victoria|central/);
+var start="piccadilly", hm=(location.hash||"").toLowerCase().match(/piccadilly|victoria|central|northern/);
 if(hm)start=hm[0]; else {try{var st=localStorage.getItem("tube-live-line");if(st&&LINES[st])start=st;}catch(e){}}
 if(demo){document.getElementById("demo").hidden=false;setStatus("Demo data","demo");}
 setLine(start,false);
