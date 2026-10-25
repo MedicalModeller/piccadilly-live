@@ -645,11 +645,11 @@ document.addEventListener("click",function(e){
   var b=e.target.closest&&e.target.closest("#lines button[data-line]");
   if(b&&window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:"line-"+b.getAttribute("data-line"),title:b.title||b.textContent,event:true});
 });
-/* Public visit total in the footer: appears only if "Allow adding visitor counts" is ticked in GoatCounter settings */
+/* Public visit total in the header: appears only if "Allow adding visitor counts" is ticked in GoatCounter settings */
 fetch("https://tudormodeller.goatcounter.com/counter/TOTAL.json").then(function(r){return r.ok?r.json():null;}).then(function(d){
   if(!d||!d.count)return;
-  var f=document.querySelector(".foot"); if(!f)return;
-  var s=document.createElement("span"); s.textContent=" Visits so far: "+d.count+"."; f.appendChild(s);
+  var m=document.querySelector("header .meta"); if(!m)return;
+  var s=document.createElement("span"); s.id="visits"; s.textContent=d.count+" visits"; m.appendChild(s);
 }).catch(function(){});
 </script>
 <script data-goatcounter="https://tudormodeller.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
