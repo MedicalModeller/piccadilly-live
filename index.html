@@ -8,22 +8,22 @@
 /* Layout: an in-carriage strip map for the chosen line. Vertical on phones, horizontal on wide screens. */
 :root{
   --bg:#f3f4f9; --surface:#ffffff; --fg:#121835; --muted:#596183; --rule:#dde0ec;
-  --line:#0019a8; --head:#0019a8; --train:#121835; --accent:#f2a900;
+  --line:#0019a8; --head:#0019a8; --headfg:#ffffff; --casing:rgba(18,24,53,.55); --train:#121835; --accent:#f2a900;
   --good:#11793f; --warn:#a9500b; --bad:#bf2530;
   --font:"Overpass","Helvetica Neue",Arial,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0a0f22; --surface:#121a35; --fg:#e9ecf8; --muted:#9aa3c6; --rule:#252e52;
-  --line:#6680ff; --train:#ffffff; --accent:#ffc63d;
+  --line:#6680ff; --casing:transparent; --train:#ffffff; --accent:#ffc63d;
   --good:#4dc98a; --warn:#f0a35a; --bad:#ff6d73; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0a0f22; --surface:#121a35; --fg:#e9ecf8; --muted:#9aa3c6; --rule:#252e52;
-  --line:#6680ff; --train:#ffffff; --accent:#ffc63d;
+  --line:#6680ff; --casing:transparent; --train:#ffffff; --accent:#ffc63d;
   --good:#4dc98a; --warn:#f0a35a; --bad:#ff6d73; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.45}
 .wrap{max-width:1280px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-header.top{background:var(--head);color:#fff}
+header.top{background:var(--head);color:var(--headfg)}
 header.top .wrap{padding-block:12px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px}
 h1{margin:0;font-weight:800;font-size:1.45rem;letter-spacing:.01em;text-wrap:balance}
 h1 span{font-weight:400;opacity:.8}
@@ -54,7 +54,7 @@ main{padding-block:14px 28px;display:grid;gap:12px}
 .stn{cursor:pointer}
 .stn:focus{outline:none}
 .stn:focus-visible .hit,.train:focus-visible .hit{stroke:var(--accent);stroke-width:2}
-.stn.sel .lbl{fill:var(--line);font-weight:800}
+.stn.sel .lbl{fill:var(--fg);font-weight:800;text-decoration:underline}
 .hit{fill:transparent}
 .train{cursor:pointer;transition:transform 2s linear}
 .train.fresh{transition:none}
@@ -93,23 +93,19 @@ body[data-line="northern"]{--line:#15151a;--head:#15151a}
 :root[data-theme="dark"] body[data-line="northern"]{--line:#cfd3df}
 .titlebox{display:grid;gap:8px}
 .lines{display:flex;flex-wrap:wrap;gap:6px}
-.lines button{font:600 .85rem/1 var(--font);color:#fff;background:transparent;border:1.5px solid rgba(255,255,255,.7);border-radius:999px;padding:7px 13px 5px;cursor:pointer}
-.lines button:hover{background:rgba(255,255,255,.14)}
-.lines button[aria-pressed="true"]{background:#fff;color:var(--head);border-color:#fff}
+.lines button{font:600 .8rem/1 var(--font);color:var(--headfg);background:transparent;border:1.5px solid currentColor;border-radius:999px;padding:6px 10px 4px;cursor:pointer;opacity:.92}
+.lines button:hover{background:rgba(127,127,127,.22)}
+.lines button[aria-pressed="true"]{background:var(--headfg);color:var(--head);border-color:var(--headfg);opacity:1}
 .lines button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.lines button .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;border:1px solid #fff}
+.lines button .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;border:1px solid currentColor}
+.case{stroke:var(--casing);fill:none;stroke-linecap:round;stroke-linejoin:round}
 </style>
 
 <header class="top">
   <div class="wrap">
     <div class="titlebox">
       <h1 id="h1">Piccadilly <span>line live</span></h1>
-      <div class="lines" id="lines" role="group" aria-label="Choose a line">
-        <button type="button" id="btn-piccadilly" data-line="piccadilly" aria-pressed="true"><span class="sw" style="background:#0019a8"></span>Piccadilly</button>
-        <button type="button" id="btn-victoria" data-line="victoria" aria-pressed="false"><span class="sw" style="background:#29b0e8"></span>Victoria</button>
-        <button type="button" id="btn-central" data-line="central" aria-pressed="false"><span class="sw" style="background:#d2042d"></span>Central</button>
-        <button type="button" id="btn-northern" data-line="northern" aria-pressed="false"><span class="sw" style="background:#15151a"></span>Northern</button>
-      </div>
+      <div class="lines" id="lines" role="group" aria-label="Choose a line"></div>
     </div>
     <div class="meta">
       <span id="status" class="pill">Connecting</span>
@@ -123,8 +119,8 @@ body[data-line="northern"]{--line:#15151a;--head:#15151a}
 
 <main class="wrap">
   <div class="legend">
-    <span><svg width="20" height="12" viewBox="-10 -6 20 12" style="transform:rotate(180deg)"><path transform="scale(1.3)" d="M-7,-3.5 L3,-3.5 L7,0 L3,3.5 L-7,3.5 Z" fill="var(--train)" stroke="var(--surface)" stroke-width="1.6"/></svg><span id="lg0">Westbound, to Heathrow and Uxbridge</span></span>
-    <span><svg width="18" height="10" viewBox="-9 -5 18 10"><path d="M-7,-3.5 L3,-3.5 L7,0 L3,3.5 L-7,3.5 Z" fill="var(--surface)" stroke="var(--train)" stroke-width="1.6"/></svg><span id="lg1">Eastbound, to Cockfosters</span></span>
+    <span><svg id="lgi0" width="20" height="12" viewBox="-10 -6 20 12" style="transform:rotate(180deg)"><path transform="scale(1.3)" d="M-7,-3.5 L3,-3.5 L7,0 L3,3.5 L-7,3.5 Z" fill="var(--train)" stroke="var(--surface)" stroke-width="1.6"/></svg><span id="lg0">Westbound, to Heathrow and Uxbridge</span></span>
+    <span><svg id="lgi1" width="18" height="10" viewBox="-9 -5 18 10"><path d="M-7,-3.5 L3,-3.5 L7,0 L3,3.5 L-7,3.5 Z" fill="var(--surface)" stroke="var(--train)" stroke-width="1.6"/></svg><span id="lg1">Eastbound, to Cockfosters</span></span>
     <span>Tap a train or a station for details</span>
   </div>
   <div class="mapbox" id="mapbox"><svg id="map" role="img" aria-label="Strip map with live train positions"></svg></div>
@@ -150,7 +146,7 @@ var LINES={
     chain(L,["South Ealing","Northfields","Boston Manor","Osterley","Hounslow East","Hounslow Central","Hounslow West","Hatton Cross"],28,1,-1,"Acton Town");
     L.push([T4,36,-1.7,"Hatton Cross"],[T23,37,-1,"Hatton Cross"],[T5,38,-1,T23]);
     chain(L,["Ealing Common","North Ealing","Park Royal","Alperton","Sudbury Town","Sudbury Hill","South Harrow","Rayners Lane","Eastcote","Ruislip Manor","Ruislip","Ickenham","Hillingdon","Uxbridge"],28,1,1,"Acton Town");
-    return {name:"Piccadilly",stations:L,extra:[[T4,T23]],childOrder:{"Hatton Cross":[T23,T4]},
+    return {name:"Piccadilly",col:["#0019a8","#0019a8","#ffffff","#6680ff"],stations:L,extra:[[T4,T23]],childOrder:{"Hatton Cross":[T23,T4]},
       ic:["Finsbury Park",KX,"Holborn","Leicester Square","Piccadilly Circus","Green Park","South Kensington","Gloucester Road","Earl's Court","Barons Court","Hammersmith","Turnham Green","Acton Town","Ealing Common","Rayners Lane","Uxbridge",T23,T5],
       dirs:["Westbound","Eastbound"],legend:["to Heathrow and Uxbridge","to Cockfosters"],
       labelUp:[T23,T5],
@@ -160,7 +156,7 @@ var LINES={
   victoria:(function(){
     var L=[];
     chain(L,["Walthamstow Central","Blackhorse Road","Tottenham Hale","Seven Sisters","Finsbury Park","Highbury & Islington",KX,"Euston","Warren Street","Oxford Circus","Green Park","Victoria","Pimlico","Vauxhall","Stockwell","Brixton"],0,1,0,null);
-    return {name:"Victoria",stations:L,extra:[],childOrder:{},
+    return {name:"Victoria",col:["#29b0e8","#1787bd","#ffffff","#62caf5"],stations:L,extra:[],childOrder:{},
       ic:["Walthamstow Central","Blackhorse Road","Tottenham Hale","Seven Sisters","Finsbury Park","Highbury & Islington",KX,"Euston","Warren Street","Oxford Circus","Green Park","Victoria","Vauxhall","Stockwell","Brixton"],
       dirs:["Southbound","Northbound"],legend:["to Brixton","to Walthamstow Central"],labelUp:[],
       alias:[["walthamstow","Walthamstow Central"],["highbury","Highbury & Islington"]],
@@ -179,7 +175,7 @@ var LINES={
     chain(L,["Oval","Stockwell","Clapham North","Clapham Common","Clapham South","Balham","Tooting Bec","Tooting Broadway","Colliers Wood","South Wimbledon","Morden"],21,1,0,"Kennington");
     chain(L,["Nine Elms","Battersea Power Station"],21,1,-1,"Kennington");
     var split={}; split[EB]={bank:EB,cx:EC}; split[EC]={bank:EB,cx:EC};
-    return {name:"Northern",stations:L,extra:[["Waterloo","Kennington"]],childOrder:{},
+    return {name:"Northern",col:["#15151a","#15151a","#ffffff","#cfd3df"],stations:L,extra:[["Waterloo","Kennington"]],childOrder:{},
       ic:["Kentish Town",EB,EC,KX,"Old Street","Moorgate","Bank","London Bridge","Elephant & Castle","Warren Street","Tottenham Court Road","Leicester Square","Charing Cross","Embankment","Waterloo","Stockwell","Balham"],
       dirs:["Southbound","Northbound"],legend:["to Morden and Battersea","to Edgware, High Barnet and Mill Hill East"],labelUp:[],
       alias:[["euston",EB],["battersea","Battersea Power Station"],["totteridge","Totteridge & Whetstone"]],
@@ -187,6 +183,78 @@ var LINES={
       branch:{cx:["Mornington Crescent","Warren Street","Goodge Street","Tottenham Court Road","Leicester Square","Charing Cross","Embankment","Waterloo","Nine Elms","Battersea Power Station"],
               bank:[KX,"Angel","Old Street","Moorgate","Bank","London Bridge","Borough","Elephant & Castle"]},
       sim:[["High Barnet","Morden",7],["Edgware","Morden",7],["Edgware","Battersea Power Station",5],["High Barnet","Battersea Power Station",4],["Mill Hill East","Kennington",2]]};
+  })(),
+  bakerloo:(function(){
+    var L=[];
+    chain(L,["Harrow & Wealdstone","Kenton","South Kenton","North Wembley","Wembley Central","Stonebridge Park","Harlesden","Willesden Junction","Kensal Green","Queen's Park","Kilburn Park","Maida Vale","Warwick Avenue","Paddington","Edgware Road","Marylebone","Baker Street","Regent's Park","Oxford Circus","Piccadilly Circus","Charing Cross","Embankment","Waterloo","Lambeth North","Elephant & Castle"],0,1,0,null);
+    return {name:"Bakerloo",col:["#b36305","#9a5404","#ffffff","#e0913f"],stations:L,extra:[],childOrder:{},flip:true,
+      ic:["Harrow & Wealdstone","Wembley Central","Willesden Junction","Queen's Park","Paddington","Marylebone","Baker Street","Oxford Circus","Piccadilly Circus","Charing Cross","Embankment","Waterloo","Elephant & Castle"],
+      dirs:["Southbound","Northbound"],legend:["to Elephant & Castle","to Harrow & Wealdstone"],labelUp:[],alias:[],
+      sim:[["Harrow & Wealdstone","Elephant & Castle",7],["Queen's Park","Elephant & Castle",9]]};
+  })(),
+  district:(function(){
+    var L=[];
+    chain(L,["Upminster","Upminster Bridge","Hornchurch","Elm Park","Dagenham East","Dagenham Heathway","Becontree","Upney","Barking","East Ham","Upton Park","Plaistow","West Ham","Bromley-by-Bow","Bow Road","Mile End","Stepney Green","Whitechapel","Aldgate East","Tower Hill","Monument","Cannon Street","Mansion House","Blackfriars","Temple","Embankment","Westminster","St. James's Park","Victoria","Sloane Square","South Kensington","Gloucester Road","Earl's Court"],0,1,0,null);
+    chain(L,["West Kensington","Barons Court","Hammersmith","Ravenscourt Park","Stamford Brook","Turnham Green","Chiswick Park","Acton Town","Ealing Common","Ealing Broadway"],33,1,0,"Earl's Court");
+    chain(L,["Gunnersbury","Kew Gardens","Richmond"],39,1,1,"Turnham Green");
+    chain(L,["High Street Kensington","Notting Hill Gate","Bayswater","Paddington","Edgware Road"],33,1,1,"Earl's Court");
+    chain(L,["West Brompton","Fulham Broadway","Parsons Green","Putney Bridge","East Putney","Southfields","Wimbledon Park","Wimbledon"],34,1,-1,"Earl's Court");
+    L.push(["Kensington (Olympia)",32.5,-0.75,"Earl's Court"]);
+    return {name:"District",col:["#00782a","#00782a","#ffffff","#3fbf6a"],stations:L,extra:[],childOrder:{},hrow:100,vw:400,vcx:200,
+      vpos:{"High Street Kensington":[31,-1],"Notting Hill Gate":[30,-1],"Bayswater":[29,-1],"Paddington":[28,-1],"Edgware Road":[27,-1],"Kensington (Olympia)":[33,-1.9],
+            "Gunnersbury":[39,0],"Kew Gardens":[40,0],"Richmond":[41,0],"Chiswick Park":[43,-1],"Acton Town":[44,-1],"Ealing Common":[45,-1],"Ealing Broadway":[46,-1]},
+      ic:["Upminster","Barking","West Ham","Mile End","Whitechapel","Tower Hill","Monument","Cannon Street","Blackfriars","Embankment","Westminster","Victoria","South Kensington","Gloucester Road","Earl's Court","Hammersmith","Turnham Green","Acton Town","Ealing Broadway","Richmond","Wimbledon","West Brompton","Kensington (Olympia)","Notting Hill Gate","Paddington","Edgware Road"],
+      dirs:["Westbound","Eastbound"],legend:["to Ealing, Richmond, Wimbledon and Edgware Road","to Upminster"],labelUp:[],alias:[["olympia","Kensington (Olympia)"]],
+      sim:[["Upminster","Richmond",5],["Upminster","Ealing Broadway",6],["Upminster","Wimbledon",6],["Edgware Road","Wimbledon",6],["Barking","Ealing Broadway",3],["High Street Kensington","Kensington (Olympia)",1]]};
+  })(),
+  "hammersmith-city":(function(){
+    var L=[];
+    chain(L,["Hammersmith","Goldhawk Road","Shepherd's Bush Market","Wood Lane","Latimer Road","Ladbroke Grove","Westbourne Park","Royal Oak","Paddington","Edgware Road","Baker Street","Great Portland Street","Euston Square",KX,"Farringdon","Barbican","Moorgate","Liverpool Street","Aldgate East","Whitechapel","Stepney Green","Mile End","Bow Road","Bromley-by-Bow","West Ham","Plaistow","Upton Park","East Ham","Barking"],0,1,0,null);
+    return {name:"Hammersmith & City",btn:"H&C",col:["#f3a9bb","#f3a9bb","#121835","#f3a9bb"],casing:true,stations:L,extra:[],childOrder:{},flip:true,
+      ic:["Hammersmith","Paddington","Baker Street",KX,"Farringdon","Moorgate","Liverpool Street","Whitechapel","Mile End","West Ham","Barking"],
+      dirs:["Eastbound","Westbound"],legend:["to Barking","to Hammersmith"],labelUp:[],alias:[],
+      sim:[["Hammersmith","Barking",12]]};
+  })(),
+  circle:(function(){
+    var L=[], PHC="Paddington (H&C)";
+    chain(L,["Hammersmith","Goldhawk Road","Shepherd's Bush Market","Wood Lane","Latimer Road","Ladbroke Grove","Westbourne Park","Royal Oak",PHC,"Edgware Road"],0,1,0,null);
+    chain(L,["Baker Street","Great Portland Street","Euston Square",KX,"Farringdon","Barbican","Moorgate","Liverpool Street","Aldgate","Tower Hill","Monument","Cannon Street","Mansion House"],10,1,1,"Edgware Road");
+    L.push(["Blackfriars",23,0,"Mansion House"]);
+    chain(L,["Temple","Embankment","Westminster","St. James's Park","Victoria","Sloane Square","South Kensington","Gloucester Road","High Street Kensington","Notting Hill Gate","Bayswater","Paddington"],22,-1,-1,"Blackfriars");
+    var tw={}; tw[PHC]="Paddington"; tw["Paddington"]=PHC;
+    return {name:"Circle",col:["#ffd300","#ffd300","#121835","#ffd300"],casing:true,stations:L,extra:[["Paddington","Edgware Road"]],childOrder:{},flip:true,hrow:90,vw:400,vcx:180,
+      twins:tw, raw:function(name){return (/paddington/i.test(name)&&/h\s*&\s*c|hammersmith/i.test(name))?PHC:null;},
+      words:[["outer rail",0],["inner rail",1],["eastbound",0],["westbound",1]],
+      ic:["Hammersmith",PHC,"Paddington","Edgware Road","Baker Street",KX,"Farringdon","Moorgate","Liverpool Street","Tower Hill","Monument","Blackfriars","Embankment","Westminster","Victoria","South Kensington","Gloucester Road","Notting Hill Gate"],
+      dirs:["Clockwise","Anticlockwise"],legend:["Hammersmith to Edgware Road via King's Cross and Victoria","Edgware Road to Hammersmith via Victoria and King's Cross"],labelUp:[],alias:[],
+      sim:[["Hammersmith","Edgware Road",9,["Edgware Road","Tower Hill","Victoria","Paddington"]]]};
+  })(),
+  metropolitan:(function(){
+    var L=[];
+    chain(L,["Aldgate","Liverpool Street","Moorgate","Barbican","Farringdon",KX,"Euston Square","Great Portland Street","Baker Street","Finchley Road","Wembley Park","Preston Road","Northwick Park","Harrow-on-the-Hill"],0,1,0,null);
+    chain(L,["West Harrow","Rayners Lane","Eastcote","Ruislip Manor","Ruislip","Ickenham","Hillingdon","Uxbridge"],14,1,-1,"Harrow-on-the-Hill");
+    chain(L,["North Harrow","Pinner","Northwood Hills","Northwood","Moor Park"],14,1,1,"Harrow-on-the-Hill");
+    L.push(["Croxley",19,1.9,"Moor Park"],["Watford",20,1.9,"Croxley"],["Rickmansworth",21,1,"Moor Park"],["Chorleywood",22,1,"Rickmansworth"],["Chalfont & Latimer",23,1,"Chorleywood"],["Chesham",24,1.9,"Chalfont & Latimer"],["Amersham",25,1,"Chalfont & Latimer"]);
+    return {name:"Metropolitan",col:["#9b0056","#9b0056","#ffffff","#e0479b"],stations:L,extra:[],childOrder:{"Moor Park":["Rickmansworth","Croxley"],"Chalfont & Latimer":["Amersham","Chesham"]},
+      hpos:{"Croxley":[19,0.4],"Watford":[20,0.4],"Chesham":[24,0.4]},
+      ic:["Liverpool Street","Moorgate","Farringdon",KX,"Baker Street","Finchley Road","Wembley Park","Harrow-on-the-Hill","Rayners Lane","Uxbridge","Rickmansworth","Chorleywood","Chalfont & Latimer","Amersham"],
+      dirs:["Northbound","Southbound"],legend:["to Uxbridge, Watford, Chesham and Amersham","to Aldgate and Baker Street"],labelUp:[],alias:[],
+      sim:[["Aldgate","Amersham",4],["Aldgate","Uxbridge",6],["Baker Street","Watford",4],["Harrow-on-the-Hill","Chesham",2],["Baker Street","Amersham",2]]};
+  })(),
+  jubilee:(function(){
+    var L=[];
+    chain(L,["Stanmore","Canons Park","Queensbury","Kingsbury","Wembley Park","Neasden","Dollis Hill","Willesden Green","Kilburn","West Hampstead","Finchley Road","Swiss Cottage","St. John's Wood","Baker Street","Bond Street","Green Park","Westminster","Waterloo","Southwark","London Bridge","Bermondsey","Canada Water","Canary Wharf","North Greenwich","Canning Town","West Ham","Stratford"],0,1,0,null);
+    return {name:"Jubilee",col:["#a0a5a9","#6b7378","#ffffff","#c3c8cc"],stations:L,extra:[],childOrder:{},flip:true,
+      words:[["eastbound",0],["southbound",0],["westbound",1],["northbound",1]],
+      ic:["Wembley Park","West Hampstead","Finchley Road","Baker Street","Bond Street","Green Park","Westminster","Waterloo","Southwark","London Bridge","Canada Water","Canary Wharf","Canning Town","West Ham","Stratford"],
+      dirs:["Eastbound","Westbound"],legend:["to Stratford","to Stanmore"],labelUp:[],alias:[],
+      sim:[["Stanmore","Stratford",14],["Willesden Green","North Greenwich",4]]};
+  })(),
+  "waterloo-city":(function(){
+    var L=[["Waterloo",0,0,null],["Bank",1,0,"Waterloo"]];
+    return {name:"Waterloo & City",btn:"W&C",col:["#95cdba","#95cdba","#121835","#95cdba"],casing:true,stations:L,extra:[],childOrder:{},flip:true,
+      ic:["Waterloo","Bank"],dirs:["Eastbound","Westbound"],legend:["to Bank","to Waterloo"],labelUp:[],alias:[],
+      sim:[["Waterloo","Bank",3]]};
   })(),
   central:(function(){
     var L=[];
@@ -196,15 +264,31 @@ var LINES={
     chain(L,["Hanger Lane","Perivale","Greenford","Northolt","South Ruislip","Ruislip Gardens","West Ruislip"],38,1,1,"North Acton");
     chain(L,["West Acton","Ealing Broadway"],38,1,-1,"North Acton");
     chain(L,["Wanstead","Redbridge","Gants Hill","Newbury Park","Barkingside","Fairlop","Hainault","Grange Hill","Chigwell","Roding Valley"],15,-1,-1,"Leytonstone");
-    return {name:"Central",stations:L,extra:[["Roding Valley","Woodford"]],childOrder:{},
+    return {name:"Central",col:["#d2042d","#b00327","#ffffff","#ff4d6d"],stations:L,extra:[["Roding Valley","Woodford"]],childOrder:{},
       ic:["Stratford","Mile End","Liverpool Street","Bank","Holborn","Tottenham Court Road","Oxford Circus","Bond Street","Notting Hill Gate","Shepherd's Bush","Greenford","South Ruislip","West Ruislip","Ealing Broadway"],
       dirs:["Westbound","Eastbound"],legend:["to Ealing Broadway and West Ruislip","to Epping and Hainault"],labelUp:[],
       alias:[["shepherds bush central","Shepherd's Bush"]],
       sim:[["Epping","West Ruislip",8],["Epping","Ealing Broadway",8],["Hainault","Ealing Broadway",7],["Woodford","Hainault",2],["Loughton","White City",3]]};
   })()
 };
-var SHORT={}; SHORT[T23]="Heathrow T2 & 3"; SHORT[T4]="Heathrow T4"; SHORT[T5]="Heathrow T5"; SHORT[KX]="King's Cross St Pancras"; SHORT["Euston (Bank)"]="Euston"; SHORT["Euston (CX)"]="Euston"; SHORT["Battersea Power Station"]="Battersea Power Stn";
+var SHORT={}; SHORT[T23]="Heathrow T2 & 3"; SHORT[T4]="Heathrow T4"; SHORT[T5]="Heathrow T5"; SHORT[KX]="King's Cross St Pancras"; SHORT["Euston (Bank)"]="Euston"; SHORT["Euston (CX)"]="Euston"; SHORT["Battersea Power Station"]="Battersea Power Stn"; SHORT["Paddington (H&C)"]="Paddington"; SHORT["Kensington (Olympia)"]="Kensington Olympia";
 function short(n){return SHORT[n]||n;}
+var LINE_ORDER=["bakerloo","central","circle","district","hammersmith-city","jubilee","metropolitan","northern","piccadilly","victoria","waterloo-city"];
+(function(){
+  var css="", dk="";
+  LINE_ORDER.forEach(function(id){var c=LINES[id].col;css+='body[data-line="'+id+'"]{--line:'+c[0]+';--head:'+c[1]+';--headfg:'+c[2]+'}\n';dk+='body[data-line="'+id+'"]{--line:'+c[3]+'}';});
+  var st=document.createElement("style");
+  st.textContent=css+'@media (prefers-color-scheme: dark){'+dk.replace(/body\[/g,':root:not([data-theme="light"]) body[')+'}'+dk.replace(/body\[/g,':root[data-theme="dark"] body[');
+  document.head.appendChild(st);
+  var box=document.getElementById("lines");
+  LINE_ORDER.forEach(function(id){
+    var L=LINES[id], b=document.createElement("button");
+    b.type="button"; b.id="btn-"+id; b.setAttribute("data-line",id); b.setAttribute("aria-pressed","false");
+    if(L.btn){b.title=L.name+" line";b.setAttribute("aria-label",L.name+" line");}
+    b.innerHTML='<span class="sw" style="background:'+L.col[0]+'"></span>'+esc(L.btn||L.name);
+    box.appendChild(b);
+  });
+})();
 
 /* ---------- Current network (rebuilt when the line changes) ---------- */
 var minU0=0, LINE=null, LINE_ID="", S={}, ORDER=[], EDGES=[], NB={}, DEPTH={}, MAXD=0, NH={}, IC=new Set(), ALIAS={}, ALIAS_KEYS=[], WORDS=["westbound","eastbound","northbound","southbound"];
@@ -239,7 +323,7 @@ function findAll(text){
   });
   return out.sort(function(a,b){return a.pos-b.pos;}).map(function(o){return o.st;});
 }
-function stationFrom(name){if(!name)return null;var n=norm(name);if(ALIAS[n])return ALIAS[n];var f=findAll(name);return f.length?f[0]:null;}
+function stationFrom(name){if(!name)return null;if(LINE.raw){var rr=LINE.raw(String(name));if(rr)return rr;}var n=norm(name);if(ALIAS[n])return ALIAS[n];var f=findAll(name);return f.length?f[0]:null;}
 function parseLoc(loc){
   var n=norm(loc), kind="other";
   if(/^between/.test(n))kind="between";
@@ -251,20 +335,18 @@ function parseLoc(loc){
 
 /* ---------- Turning predictions into trains ---------- */
 var raw=[], trains=new Map(), fetchedAt=0;
-function platformWord(p){var pl=String(p.platformName||"").toLowerCase();for(var i=0;i<WORDS.length;i++)if(pl.indexOf(WORDS[i])>=0)return WORDS[i];return "";}
+function wordIdx(p){ // direction from the platform name: 0, 1 or -1 if unknown
+  var pl=String(p.platformName||"").toLowerCase(), w=LINE.words||[[LINE.dirs[0].toLowerCase(),0],[LINE.dirs[1].toLowerCase(),1]];
+  for(var i=0;i<w.length;i++)if(pl.indexOf(w[i][0])>=0)return w[i][1];
+  return -1;
+}
 function awayOf(p,next,dest){
   if(dest&&next&&dest!==next&&NH[next][dest])return DEPTH[NH[next][dest]]>DEPTH[next];
-  var w=platformWord(p);
-  if(w===LINE.dirs[0].toLowerCase())return true;
-  if(w===LINE.dirs[1].toLowerCase())return false;
+  var w=wordIdx(p); if(w>=0)return w===0;
   if(dest&&dest===next)return DEPTH[next]>MAXD/2;
   return true;
 }
-function labelOf(p,away){
-  var w=platformWord(p);
-  for(var i=0;i<2;i++)if(LINE.dirs[i].toLowerCase()===w)return i;
-  return away?0:1;
-}
+function labelOf(p,away){var w=wordIdx(p);return w>=0?w:(away?0:1);}
 function defaultPrev(next,dest,away){
   var hop=(dest&&dest!==next)?NH[next][dest]:null;
   var c=NB[next].filter(function(n){return n!==hop;});
@@ -274,10 +356,13 @@ function defaultPrev(next,dest,away){
 function makeTrain(key,p){
   var next=p._st, dest=p._dest, away=awayOf(p,next,dest), L=parseLoc(p.currentLocation||"");
   if(p._hint)L.found=L.found.map(function(x){return fixSt(x,p._hint);});
-  var prev=null, mode="move", others=L.found.filter(function(s){return s!==next;});
-  if(L.kind==="at"){ if(!L.found.length||L.found[0]===next)mode="at"; else {prev=L.found[0];mode="atprev";} }
-  else if(L.kind==="approaching"&&L.found[0]===next&&p.timeToStation<45){mode="at";}
+  var tw=LINE.twins||{}, same=function(a,b){return a===b||tw[a]===b;};
+  var prev=null, mode="move", others=L.found.filter(function(s){return !same(s,next);});
+  if(L.kind==="at"){ if(!L.found.length||same(L.found[0],next))mode="at"; else {prev=L.found[0];mode="atprev";} }
+  else if(L.kind==="approaching"&&same(L.found[0],next)&&p.timeToStation<45){mode="at";}
   else if(others.length)prev=others[0];
+  if(prev&&NB[next].indexOf(prev)<0&&tw[prev]&&NB[next].indexOf(tw[prev])>=0)prev=tw[prev];
+  if(prev&&NB[next].indexOf(prev)<0&&tw[next]&&NB[tw[next]].indexOf(prev)>=0)next=tw[next];
   if(prev&&NB[next].indexOf(prev)<0){prev=null;if(mode==="atprev")mode="move";}
   if(!prev)prev=defaultPrev(next,dest,away);
   return {key:key,away:away,dir:labelOf(p,away),next:next,prev:prev,tts:p.timeToStation,mode:mode,
@@ -304,7 +389,10 @@ function ingest(list,at){
     if(LINE.split){p._hint=routeHint(p,byV[String(p.vehicleId||"").trim()]);st=fixSt(st,p._hint);}
     p._st=st; p._dest=stationFrom(p.destinationName||p.towards||""); raw.push(p);
     var key=String(p.vehicleId||"").trim();
-    if(!key||/^0+$/.test(key))return;
+    if(!key||/^0+$/.test(key)){
+      if(!p.currentLocation)return;
+      key="~"+norm(p.destinationName||p.towards)+"|"+wordIdx(p)+"|"+norm(p.currentLocation);
+    }
     var b=best.get(key); if(!b||p.timeToStation<b.timeToStation)best.set(key,p);
   });
   trains=new Map(); best.forEach(function(p,key){trains.set(key,makeTrain(key,p));});
@@ -315,20 +403,20 @@ function ingest(list,at){
 var svg=document.getElementById("map"), box=document.getElementById("mapbox"), NS="http://www.w3.org/2000/svg";
 var LY=null, trainLayer=null, gTrains=new Map(), selTrain=null, selStn=null;
 function layout(){
-  var w=box.clientWidth, maxU=0, vmin=0, vmax=0, up=new Set(LINE.labelUp);
-  ORDER.forEach(function(n){var s=S[n];maxU=Math.max(maxU,s.u);vmin=Math.min(vmin,s.v);vmax=Math.max(vmax,s.v);});
-  if(w>=860){
-    var hp=LINE.hpos||{}, U=function(n){return hp[n]?hp[n][0]-minU0:S[n].u;}, V=function(n){return hp[n]?hp[n][1]:S[n].v;};
-    vmax=0; ORDER.forEach(function(n){vmax=Math.max(vmax,V(n));});
-    var W=Math.max(860,w-2), xR=W-125, xL=34, sp=(xR-xL)/maxU, ty=120+vmax*64;
-    return {mode:"h",W:W,H:Math.round(ty-vmin*64+(vmin<0?120:40)),sw:5,
-      pt:function(n){return {x:xR-U(n)*sp,y:ty-V(n)*64};},
+  var w=box.clientWidth, up=new Set(LINE.labelUp), horiz=w>=860, ov=(horiz?LINE.hpos:LINE.vpos)||{};
+  var U=function(n){return ov[n]?ov[n][0]-minU0:S[n].u;}, V=function(n){return ov[n]?ov[n][1]:S[n].v;};
+  var maxU=1, vmin=0, vmax=0;
+  ORDER.forEach(function(n){maxU=Math.max(maxU,U(n));vmin=Math.min(vmin,V(n));vmax=Math.max(vmax,V(n));});
+  if(horiz){
+    var W=Math.max(860,w-2), xR=W-125, xL=34, sp=(xR-xL)/maxU, rh=LINE.hrow||64, ty=120+vmax*rh, fl=!!LINE.flip;
+    return {mode:"h",W:W,H:Math.round(ty-vmin*rh+(vmin<0?120:40)),sw:5,
+      pt:function(n){return {x:fl?xL+U(n)*sp:xR-U(n)*sp,y:ty-V(n)*rh};},
       side:function(n){return (V(n)<0.5&&V(n)!==0&&!up.has(n))?1:-1;}};
   }
   var cx=LINE.vcx||(vmin<0?150:110);
   return {mode:"v",W:LINE.vw||360,H:28+maxU*24+28,sw:6,
-    pt:function(n){var s=S[n];return {x:cx+s.v*32,y:28+s.u*24};},
-    side:function(n){return S[n].v<0?-1:1;}};
+    pt:function(n){return {x:cx+V(n)*32,y:28+U(n)*24};},
+    side:function(n){return V(n)<0?-1:1;}};
 }
 function el(tag,attrs,parent){var e=document.createElementNS(NS,tag);for(var k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
 function drawMap(){
@@ -336,6 +424,7 @@ function drawMap(){
   svg.setAttribute("viewBox","0 0 "+LY.W+" "+LY.H); svg.setAttribute("class",LY.mode);
   svg.setAttribute("aria-label",LINE.name+" line strip map with live train positions");
   var lines=el("g",{},svg);
+  if(LINE.casing)EDGES.forEach(function(e){var a=LY.pt(e[0]),b=LY.pt(e[1]);el("path",{"class":"case","stroke-width":LY.sw+2.5,d:"M"+a.x+","+a.y+"L"+b.x+","+b.y},lines);});
   EDGES.forEach(function(e){var a=LY.pt(e[0]),b=LY.pt(e[1]);el("path",{"class":"seg","stroke-width":LY.sw,d:"M"+a.x+","+a.y+"L"+b.x+","+b.y},lines);});
   var stns=el("g",{},svg);
   ORDER.forEach(function(n){
@@ -344,12 +433,12 @@ function drawMap(){
     if(LY.mode==="v"){
       el("rect",{"class":"hit",x:sd>0?p.x-12:p.x-130,y:p.y-11,width:142,height:22},g);
       if(ic)el("circle",{"class":"ic",cx:p.x,cy:p.y,r:5.5},g);
-      else el("line",{"class":"tick","stroke-width":3,x1:p.x,y1:p.y,x2:p.x+sd*7,y2:p.y},g);
+      else{if(LINE.casing)el("line",{"class":"case","stroke-width":5,x1:p.x,y1:p.y,x2:p.x+sd*8,y2:p.y},g);el("line",{"class":"tick","stroke-width":3,x1:p.x,y1:p.y,x2:p.x+sd*7,y2:p.y},g);}
       lbl=el("text",{"class":"lbl"+(ic?" ic-l":""),x:p.x+sd*20,y:p.y+4,"text-anchor":sd>0?"start":"end"},g);
     }else{
       el("circle",{"class":"hit",cx:p.x,cy:p.y,r:12},g);
       if(ic)el("circle",{"class":"ic",cx:p.x,cy:p.y,r:5},g);
-      else el("line",{"class":"tick","stroke-width":3,x1:p.x,y1:p.y,x2:p.x,y2:p.y+sd*7},g);
+      else{if(LINE.casing)el("line",{"class":"case","stroke-width":5,x1:p.x,y1:p.y,x2:p.x,y2:p.y+sd*8},g);el("line",{"class":"tick","stroke-width":3,x1:p.x,y1:p.y,x2:p.x,y2:p.y+sd*7},g);}
       var lx=p.x+3, ly=p.y+sd*17;
       lbl=el("text",{"class":"lbl"+(ic?" ic-l":""),x:lx,y:ly,transform:"rotate("+(sd<0?-45:45)+" "+lx+" "+ly+")"},g);
       if(sd>0)lbl.setAttribute("dy","0.7em");
@@ -413,12 +502,12 @@ function refreshSheet(){
   var el=(Date.now()-fetchedAt)/1000, h="";
   if(selTrain&&trains.has(selTrain)){
     var t=trains.get(selTrain), tts=Math.max(0,t.tts-el);
-    h='<div class="hd"><div><h2>Train to '+esc(destName(t))+'</h2><div class="sub">'+LINE.dirs[t.dir]+' · train '+esc(t.key)+'</div></div><button class="x" data-close aria-label="Close">×</button></div>'+
+    h='<div class="hd"><div><h2>Train to '+esc(destName(t))+'</h2><div class="sub">'+LINE.dirs[t.dir]+(t.key.charAt(0)==="~"?"":' · train '+esc(t.key))+'</div></div><button class="x" data-close aria-label="Close">×</button></div>'+
       '<dl class="kv"><dt>Next stop</dt><dd><b>'+esc(short(t.next))+'</b> · '+mins(tts)+'</dd>'+
       (t.loc?'<dt>Reported</dt><dd>'+esc(t.loc)+'</dd>':'')+'</dl>';
   }else if(selStn&&S[selStn]){
     var list=raw.filter(function(p){return p._st===selStn;}).map(function(p){
-      var t=trains.get(String(p.vehicleId||""));
+      var t=trains.get(String(p.vehicleId||"").trim());
       return {tts:Math.max(0,p.timeToStation-el),dest:p._dest?short(p._dest):String(p.destinationName||p.towards||"Check front of train").replace(/ Underground Station/i,""),dir:t?t.dir:labelOf(p,awayOf(p,p._st,p._dest))};
     }).sort(function(a,b){return a.tts-b.tts;});
     var grp=function(d){
@@ -454,7 +543,9 @@ function makeSim(){
   var seed=20261022; function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647;}
   var SPEED=1/105, list=[], id=301, t0=Date.now();
   LINE.sim.forEach(function(r){
-    var p=pathBetween(r[0],r[1]), L=p.length-1, fwd=DEPTH[r[1]]>DEPTH[r[0]]?0:1;
+    var pts=[r[0]].concat(r[3]||[]).concat([r[1]]), p=[r[0]];
+    for(var q=1;q<pts.length;q++)p=p.concat(pathBetween(pts[q-1],pts[q]).slice(1));
+    var L=p.length-1, fwd=(r[3]&&r[3].length)?0:(DEPTH[r[1]]>DEPTH[r[0]]?0:1);
     for(var i=0;i<r[2];i++){var idx=Math.round(rnd()*L*4)/4, w=rnd()<0.5;list.push({id:String(id++),p:p,L:L,fwd:fwd,ph:w?idx:2*L-idx,via:p.indexOf("Warren Street")>=0?"CX":(p.indexOf("Moorgate")>=0?"Bank":"")});}
   });
   function nm(n){return n+" Underground Station";}
@@ -516,6 +607,8 @@ function setLine(id,save){
   document.title=LINE.name+" Live";
   document.getElementById("lg0").textContent=LINE.dirs[0]+", "+LINE.legend[0];
   document.getElementById("lg1").textContent=LINE.dirs[1]+", "+LINE.legend[1];
+  document.getElementById("lgi0").style.transform=LINE.flip?"none":"rotate(180deg)";
+  document.getElementById("lgi1").style.transform=LINE.flip?"rotate(180deg)":"none";
   document.querySelectorAll("#lines button").forEach(function(b){b.setAttribute("aria-pressed",String(b.getAttribute("data-line")===id));});
   trains=new Map(); raw=[]; fetchedAt=0; selTrain=null; selStn=null; sheet.hidden=true;
   document.getElementById("alert").hidden=true;
