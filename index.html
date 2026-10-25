@@ -1,4 +1,7 @@
-<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Live London Underground train positions on a tube-carriage style strip map for the Piccadilly, Victoria, Central and Northern lines, with line status and next trains at every station."><link rel="canonical" href="https://tube.trent-park.org/"><meta property="og:title" content="Tube Live: Piccadilly, Victoria, Central and Northern line trains"><meta property="og:description" content="See every train on the line, live, on a strip map like the one in the carriage."><meta property="og:url" content="https://tube.trent-park.org/"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<!doctype html>
+<!-- Tube Live (tube.trent-park.org) by TudorDesigns
+     Version: 25 October 2026. All 11 Underground lines; adds GoatCounter visit tracking (tudormodeller.goatcounter.com). -->
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Live London Underground train positions on a tube-carriage style strip map for the Piccadilly, Victoria, Central and Northern lines, with line status and next trains at every station."><link rel="canonical" href="https://tube.trent-park.org/"><meta property="og:title" content="Tube Live: Piccadilly, Victoria, Central and Northern line trains"><meta property="og:description" content="See every train on the line, live, on a strip map like the one in the carriage."><meta property="og:url" content="https://tube.trent-park.org/"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
 <title>Piccadilly Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -635,4 +638,19 @@ document.addEventListener("visibilitychange",function(){if(!document.hidden)poll
 })();
 </script>
 
+<script>
+/* Visit counting (GoatCounter: no cookies, no personal data) */
+window.goatcounter={no_onload:false};
+document.addEventListener("click",function(e){
+  var b=e.target.closest&&e.target.closest("#lines button[data-line]");
+  if(b&&window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:"line-"+b.getAttribute("data-line"),title:b.title||b.textContent,event:true});
+});
+/* Public visit total in the footer: appears only if "Allow adding visitor counts" is ticked in GoatCounter settings */
+fetch("https://tudormodeller.goatcounter.com/counter/TOTAL.json").then(function(r){return r.ok?r.json():null;}).then(function(d){
+  if(!d||!d.count)return;
+  var f=document.querySelector(".foot"); if(!f)return;
+  var s=document.createElement("span"); s.textContent=" Visits so far: "+d.count+"."; f.appendChild(s);
+}).catch(function(){});
+</script>
+<script data-goatcounter="https://tudormodeller.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body></html>
