@@ -1,7 +1,7 @@
 <!doctype html>
 <!-- Tube Live (tube.trent-park.org) by TudorDesigns
-     Version: 25 October 2026. All 11 Underground lines; adds GoatCounter visit tracking (tudormodeller.goatcounter.com). -->
-<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Live London Underground train positions on a tube-carriage style strip map for the Piccadilly, Victoria, Central and Northern lines, with line status and next trains at every station."><link rel="canonical" href="https://tube.trent-park.org/"><meta property="og:title" content="Tube Live: Piccadilly, Victoria, Central and Northern line trains"><meta property="og:description" content="See every train on the line, live, on a strip map like the one in the carriage."><meta property="og:url" content="https://tube.trent-park.org/"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+     Version: 25 October 2026. All 11 Underground lines plus the Weaver line (added 28 October 2026); GoatCounter visit tracking (tudormodeller.goatcounter.com). -->
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Live London Underground train positions on a tube-carriage style strip map for all 11 London Underground lines plus the Weaver line, with line status and next trains at every station."><link rel="canonical" href="https://tube.trent-park.org/"><meta property="og:title" content="Tube Live: live trains on every Underground line and the Weaver line"><meta property="og:description" content="See every train on the line, live, on a strip map like the one in the carriage."><meta property="og:url" content="https://tube.trent-park.org/"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
 <title>Tube Live: live London Underground train map</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -259,6 +259,17 @@ var LINES={
       ic:["Waterloo","Bank"],dirs:["Eastbound","Westbound"],legend:["to Bank","to Waterloo"],labelUp:[],alias:[],
       sim:[["Waterloo","Bank",3]]};
   })(),
+  weaver:(function(){
+    var L=[];
+    L.push(["Enfield Town",2,-1,null],["Bush Hill Park",3,-1,"Enfield Town"]);
+    chain(L,["Edmonton Green","Silver Street","White Hart Lane","Bruce Grove","Seven Sisters","Stamford Hill","Stoke Newington","Rectory Road","Hackney Downs","London Fields","Cambridge Heath","Bethnal Green","Liverpool Street"],4,1,0,"Bush Hill Park");
+    chain(L,["Southbury","Turkey Street","Theobalds Grove","Cheshunt"],3,-1,1,"Edmonton Green");
+    chain(L,["Clapton","St James Street","Walthamstow Central","Wood Street","Highams Park","Chingford"],11,-1,-1,"Hackney Downs");
+    return {name:"Weaver",col:["#972861","#972861","#ffffff","#d05a95"],stations:L,extra:[],childOrder:{"Edmonton Green":["Silver Street","Southbury"],"Hackney Downs":["London Fields","Clapton"]},flip:true,vw:400,vcx:180,
+      ic:["Liverpool Street","Hackney Downs","Seven Sisters","Walthamstow Central","Cheshunt","Edmonton Green"],
+      dirs:["Southbound","Northbound"],legend:["to Liverpool Street","to Enfield Town, Cheshunt and Chingford"],labelUp:[],alias:[["st james st","St James Street"]],
+      sim:[["Enfield Town","Liverpool Street",5],["Cheshunt","Liverpool Street",3],["Chingford","Liverpool Street",5]]};
+  })(),
   central:(function(){
     var L=[];
     chain(L,["Epping","Theydon Bois","Debden","Loughton","Buckhurst Hill","Woodford"],0,1,1,null);
@@ -276,7 +287,7 @@ var LINES={
 };
 var SHORT={}; SHORT[T23]="Heathrow T2 & 3"; SHORT[T4]="Heathrow T4"; SHORT[T5]="Heathrow T5"; SHORT[KX]="King's Cross St Pancras"; SHORT["Euston (Bank)"]="Euston"; SHORT["Euston (CX)"]="Euston"; SHORT["Battersea Power Station"]="Battersea Power Stn"; SHORT["Paddington (H&C)"]="Paddington"; SHORT["Kensington (Olympia)"]="Kensington Olympia";
 function short(n){return SHORT[n]||n;}
-var LINE_ORDER=["bakerloo","central","circle","district","hammersmith-city","jubilee","metropolitan","northern","piccadilly","victoria","waterloo-city"];
+var LINE_ORDER=["bakerloo","central","circle","district","hammersmith-city","jubilee","metropolitan","northern","piccadilly","victoria","waterloo-city","weaver"];
 (function(){
   var css="", dk="";
   LINE_ORDER.forEach(function(id){var c=LINES[id].col;css+='body[data-line="'+id+'"]{--line:'+c[0]+';--head:'+c[1]+';--headfg:'+c[2]+'}\n';dk+='body[data-line="'+id+'"]{--line:'+c[3]+'}';});
