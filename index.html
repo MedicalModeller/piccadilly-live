@@ -1,6 +1,6 @@
 <!doctype html>
 <!-- Tube Live (tube.trent-park.org) by TudorDesigns
-     Version: 29 October 2026. Tube (11 lines), Overground (6 lines), DLR and Elizabeth line, with a switch between them; GoatCounter visit tracking (tudormodeller.goatcounter.com).
+     Version: 29 October 2026. Tube (11 lines), Overground (6 lines), DLR and Elizabeth line, with a switch between them; Ko-fi button (ko-fi.com/tudormodeller); GoatCounter visit tracking (tudormodeller.goatcounter.com).
      Questions, ideas or bugs: https://github.com/MedicalModeller/tube-live/issues -->
 <html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Live London Underground train positions on a tube-carriage style strip map for every London Underground, Overground, DLR and Elizabeth line, with line status and next trains at every station."><link rel="canonical" href="https://tube.trent-park.org/"><meta property="og:title" content="Tube Live: live trains on every Tube, Overground, DLR and Elizabeth line"><meta property="og:description" content="See every train on the line, live, on a strip map like the one in the carriage."><meta property="og:url" content="https://tube.trent-park.org/"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
 <title>Tube Live: live Tube, Overground, DLR and Elizabeth line train map</title>
@@ -69,6 +69,11 @@ main{padding-block:14px 28px;display:grid;gap:12px}
 .train:focus{outline:none}
 @media (prefers-reduced-motion: reduce){.train{transition:none}}
 .foot{margin:0;font-size:.8rem;color:var(--muted);max-width:70ch}
+.support{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-size:.85rem;color:var(--muted)}
+.kofi{display:inline-flex;align-items:center;gap:8px;padding:8px 14px 7px;border-radius:999px;background:var(--surface);border:1.5px solid var(--rule);color:var(--fg);font-weight:800;text-decoration:none}
+.kofi svg{color:var(--line)}
+.kofi:hover{border-color:var(--line)}
+.kofi:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:20;padding-bottom:env(safe-area-inset-bottom,0px);pointer-events:none}
 .sheet .card{pointer-events:auto;margin:0 auto 12px;max-width:440px;width:calc(100% - 2*max(16px,env(safe-area-inset-left,0px)));background:var(--surface);border:1px solid var(--rule);border-radius:12px;box-shadow:0 10px 30px rgba(10,15,40,.22);padding:14px 16px 16px}
 @media (min-width:900px){.sheet .card{margin-right:max(24px,env(safe-area-inset-right,0px))}}
@@ -135,6 +140,10 @@ body[data-line="northern"]{--line:#15151a;--head:#15151a}
     <span id="swipe" hidden>On a phone, swipe the map sideways to see it all</span>
   </div>
   <div class="mapbox" id="mapbox"><svg id="map" role="img" aria-label="Strip map with live train positions"></svg></div>
+  <div class="support">
+    <a class="kofi" id="kofi" href="https://ko-fi.com/tudormodeller" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h12v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 3.5c0 1 1 1.2 1 2.2M12 3.5c0 1 1 1.2 1 2.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Buy me a coffee</a>
+    <span>Tube Live is free to use. If it helps you, a coffee keeps it going.</span>
+  </div>
   <p class="foot">Positions are estimated from TfL arrival predictions, so a train can lag or jump a little between updates. Refreshes every 15 seconds. Powered by TfL Open Data. Built by TudorDesigns.</p>
 </main>
 
@@ -809,6 +818,7 @@ window.goatcounter={no_onload:false};
 document.addEventListener("click",function(e){
   var b=e.target.closest&&e.target.closest("#lines button[data-line]");
   if(b&&window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:"line-"+b.getAttribute("data-line"),title:b.title||b.textContent,event:true});
+  if(e.target.closest&&e.target.closest("#kofi")&&window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:"kofi-click",title:"Buy me a coffee",event:true});
 });
 /* Public visit total in the header: appears only if "Allow adding visitor counts" is ticked in GoatCounter settings */
 fetch("https://tudormodeller.goatcounter.com/counter/TOTAL.json").then(function(r){return r.ok?r.json():null;}).then(function(d){
