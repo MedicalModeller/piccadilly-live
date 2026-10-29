@@ -326,18 +326,30 @@ var LINES={
       sim:[["Highbury & Islington","West Croydon",5],["Highbury & Islington","Crystal Palace",4],["Dalston Junction","New Cross",3],["Dalston Junction","Clapham Junction",4]]};
   })(),
   dlr:(function(){
+    /* Laid out like TfL's DLR diagram: Bank to Beckton across the middle, the two Stratford routes above,
+       Woolwich and Lewisham below. Positions are along the strip (u) and row (v). */
     var L=[];
-    chain(L,["Bank","Shadwell","Limehouse","Westferry","West India Quay","Canary Wharf","Heron Quays","South Quay","Crossharbour","Mudchute","Island Gardens","Cutty Sark","Greenwich","Deptford Bridge","Elverson Road","Lewisham"],0,1,0,null);
-    L.push(["Tower Gateway",0,1,"Shadwell"],["Poplar",3.3,1,"Westferry"]);
-    chain(L,["Blackwall","East India","Canning Town","Royal Victoria","Custom House","Prince Regent","Royal Albert","Beckton Park","Cyprus","Gallions Reach","Beckton"],5,1,1,"Poplar");
-    chain(L,["West Silvertown","Pontoon Dock","London City Airport","King George V","Woolwich Arsenal"],8,1,-1,"Canning Town");
-    chain(L,["Star Lane","West Ham","Abbey Road","Stratford High Street"],9,1,2,"Canning Town");
-    L.push(["Stratford",12.4,3,"Stratford High Street"],["Stratford International",13.4,3,"Stratford"]);
-    chain(L,["All Saints","Langdon Park","Devons Road","Bow Church","Pudding Mill Lane"],5,1,3,"Poplar");
-    return {name:"DLR",h1:"DLR",col:["#00a4a7","#00797c","#ffffff","#3fd0d2"],stations:L,extra:[["Poplar","West India Quay"],["Pudding Mill Lane","Stratford"]],childOrder:{},flip:true,hrow:100,forceH:1150,
+    function at(n,u,v,parent){L.push([n,u,v,parent]);}
+    at("Bank",0,0,null); at("Shadwell",1.6,0,"Bank"); at("Limehouse",2.55,0,"Shadwell"); at("Westferry",3.55,0,"Limehouse");
+    at("Tower Gateway",0.6,0.6,"Shadwell");
+    at("Poplar",4.6,0,"Westferry"); at("Blackwall",5.7,0,"Poplar"); at("East India",6.5,0,"Blackwall"); at("Canning Town",8.15,0,"East India");
+    [["Royal Victoria",9.05],["Custom House",10.05],["Prince Regent",11],["Royal Albert",12.05],["Beckton Park",13],["Cyprus",14.05],["Gallions Reach",15.05],["Beckton",16.05]]
+      .forEach(function(r,k,a){at(r[0],r[1],0,k?a[k-1][0]:"Canning Town");});
+    [["West India Quay",6.45],["Canary Wharf",7.35],["Heron Quays",8.05],["South Quay",8.7],["Crossharbour",9.6],["Mudchute",10.7],["Island Gardens",11.6],["Cutty Sark",12.55],["Greenwich",13.6],["Deptford Bridge",14.4],["Elverson Road",15.25],["Lewisham",16.05]]
+      .forEach(function(r,k,a){at(r[0],r[1],-2,k?a[k-1][0]:"Westferry");});
+    [["West Silvertown",10.5],["Pontoon Dock",11.8],["London City Airport",13.1],["King George V",14.4],["Woolwich Arsenal",15.5]]
+      .forEach(function(r,k,a){at(r[0],r[1],-1,k?a[k-1][0]:"Canning Town");});
+    [["Star Lane",8.15],["West Ham",9.7],["Abbey Road",11.15],["Stratford High Street",12.4]]
+      .forEach(function(r,k,a){at(r[0],r[1],1,k?a[k-1][0]:"Canning Town");});
+    at("Stratford",14.65,2,"Stratford High Street"); at("Stratford International",16.05,2,"Stratford");
+    [["All Saints",8.15],["Langdon Park",9.5],["Devons Road",10.9],["Bow Church",12.25],["Pudding Mill Lane",13.5]]
+      .forEach(function(r,k,a){at(r[0],r[1],2,k?a[k-1][0]:"Poplar");});
+    var up=["West India Quay","Canary Wharf","Heron Quays","South Quay","Crossharbour","Mudchute","Island Gardens","Cutty Sark","Greenwich","Deptford Bridge","Elverson Road","Lewisham",
+            "West Silvertown","Pontoon Dock","London City Airport","King George V","Woolwich Arsenal"];
+    return {name:"DLR",h1:"DLR",col:["#00a4a7","#00797c","#ffffff","#3fd0d2"],stations:L,extra:[["Poplar","West India Quay"],["Pudding Mill Lane","Stratford"]],childOrder:{"Westferry":["Poplar","West India Quay"],"Canning Town":["Royal Victoria","Star Lane","West Silvertown"]},flip:true,hrow:100,forceH:1150,
       ic:["Bank","Tower Gateway","Shadwell","Limehouse","Canary Wharf","Heron Quays","Greenwich","Lewisham","Canning Town","Custom House","West Ham","Stratford","Stratford International","Woolwich Arsenal","London City Airport"],
       words:[["outbound",0],["inbound",1]],
-      dirs:["Outbound","Inbound"],legend:["away from Bank and Tower Gateway","towards Bank and Tower Gateway"],labelUp:[],alias:[],
+      dirs:["Outbound","Inbound"],legend:["away from Bank and Tower Gateway","towards Bank and Tower Gateway"],labelUp:up,alias:[["cutty sark","Cutty Sark"]],
       sim:[["Bank","Lewisham",6],["Stratford","Lewisham",4],["Tower Gateway","Beckton",4],["Bank","Woolwich Arsenal",4],["Stratford International","Woolwich Arsenal",3]]};
   })(),
   elizabeth:(function(){
@@ -347,12 +359,16 @@ var LINES={
     chain(L,["Stratford","Maryland","Forest Gate","Manor Park","Ilford","Seven Kings","Goodmayes","Chadwell Heath","Romford","Gidea Park","Harold Wood","Brentwood","Shenfield"],21,1,1,"Whitechapel");
     chain(L,["Canary Wharf","Custom House","Woolwich","Abbey Wood"],21,1,-1,"Whitechapel");
     var co={"Hayes & Harlington":["Southall",T23],"Whitechapel":["Stratford","Canary Wharf"]}; co[T23]=[T5,T4];
-    var hp={}; hp[T5]=[11,-1]; hp[T4]=[10,-1.8];
-    ["Stratford","Maryland","Forest Gate","Manor Park","Ilford","Seven Kings","Goodmayes","Chadwell Heath","Romford","Gidea Park","Harold Wood","Brentwood","Shenfield"].forEach(function(n,i){hp[n]=[21+i,-1];});
-    ["Canary Wharf","Custom House","Woolwich","Abbey Wood"].forEach(function(n,i){hp[n]=[21+i,-2];});
+    /* Wide screens follow the layout of TfL's own Elizabeth line diagram: Reading comes in on a diagonal to Slough,
+       Heathrow hangs below Hayes & Harlington (T4 to the left, T5 underneath), Shenfield rises above, Abbey Wood drops below. */
+    var hp={};
+    ["Reading","Twyford","Maidenhead","Taplow","Burnham"].forEach(function(n,i){hp[n]=[i,1.25-i*0.25];});
+    hp[T23]=[9.6,-1]; hp[T4]=[8.6,-1.9]; hp[T5]=[9.6,-1.9];
+    ["Stratford","Maryland","Forest Gate","Manor Park","Ilford","Seven Kings","Goodmayes","Chadwell Heath","Romford","Gidea Park","Harold Wood","Brentwood","Shenfield"].forEach(function(n,i){hp[n]=[22+i,1];});
+    ["Canary Wharf","Custom House","Woolwich","Abbey Wood"].forEach(function(n,i){hp[n]=[21+i,-1];});
     return {name:"Elizabeth",col:["#6950a1","#5a4390","#ffffff","#a08bd6"],stations:L,extra:[],childOrder:co,flip:true,vw:400,vcx:180,hpos:hp,hrow:90,
       ic:["Reading","Slough",T23,T4,T5,"Ealing Broadway","Paddington","Bond Street","Tottenham Court Road","Farringdon","Liverpool Street","Whitechapel","Stratford","Romford","Shenfield","Canary Wharf","Custom House","Woolwich","Abbey Wood"],
-      dirs:["Eastbound","Westbound"],legend:["to Abbey Wood and Shenfield","to Reading and Heathrow"],labelUp:[],
+      dirs:["Eastbound","Westbound"],legend:["to Abbey Wood and Shenfield","to Reading and Heathrow"],labelUp:["Burnham"],
       alias:[["heathrow terminals 2 and 3",T23],["heathrow terminals 2 3",T23],["heathrow terminal 2 and 3",T23],["heathrow terminals 123",T23],["heathrow t2 and 3",T23],["terminals 2 and 3",T23],["heathrow t4",T4],["terminal 4",T4],["heathrow t5",T5],["terminal 5",T5]],
       sim:[["Reading","Abbey Wood",4],["Heathrow Terminal 5","Abbey Wood",4],["Paddington","Shenfield",5],["Heathrow Terminal 4","Shenfield",2],["Maidenhead","Shenfield",2]]};
   })(),
