@@ -336,7 +336,7 @@ var LINES={
     chain(L,["All Saints","Langdon Park","Devons Road","Bow Church","Pudding Mill Lane"],5,1,3,"Poplar");
     return {name:"DLR",h1:"DLR",col:["#00a4a7","#00797c","#ffffff","#3fd0d2"],stations:L,extra:[["Poplar","West India Quay"],["Pudding Mill Lane","Stratford"]],childOrder:{},flip:true,hrow:100,forceH:1150,
       ic:["Bank","Tower Gateway","Shadwell","Limehouse","Canary Wharf","Heron Quays","Greenwich","Lewisham","Canning Town","Custom House","West Ham","Stratford","Stratford International","Woolwich Arsenal","London City Airport"],
-      words:[["eastbound",0],["southbound",0],["westbound",1],["northbound",1]],
+      words:[["outbound",0],["inbound",1]],
       dirs:["Outbound","Inbound"],legend:["away from Bank and Tower Gateway","towards Bank and Tower Gateway"],labelUp:[],alias:[],
       sim:[["Bank","Lewisham",6],["Stratford","Lewisham",4],["Tower Gateway","Beckton",4],["Bank","Woolwich Arsenal",4],["Stratford International","Woolwich Arsenal",3]]};
   })(),
@@ -386,7 +386,7 @@ MODES.forEach(function(m){m.lines.forEach(function(id){LINE_ORDER.push(id);MODE_
 
 /* ---------- Current network (rebuilt when the line changes) ---------- */
 var minU0=0, LINE=null, LINE_ID="", S={}, ORDER=[], EDGES=[], NB={}, DEPTH={}, MAXD=0, NH={}, IC=new Set(), ALIAS={}, ALIAS_KEYS=[], WORDS=["westbound","eastbound","northbound","southbound"];
-function norm(s){return String(s||"").toLowerCase().replace(/\([^)]*\)/g," ").replace(/underground station|tube station|rail station/g," ").replace(/&/g," and ").replace(/['’.]/g,"").replace(/[^a-z0-9]+/g," ").replace(/\s+/g," ").trim();}
+function norm(s){return String(s||"").toLowerCase().replace(/\([^)]*\)/g," ").replace(/underground station|tube station|rail station|dlr station/g," ").replace(/&/g," and ").replace(/['’.]/g,"").replace(/[^a-z0-9]+/g," ").replace(/\s+/g," ").trim();}
 function buildNetwork(id){
   LINE_ID=id; LINE=LINES[id]; S={}; ORDER=[]; EDGES=[]; NB={}; DEPTH={}; NH={};
   LINE.stations.forEach(function(r){S[r[0]]={n:r[0],u:r[1],v:r[2],parent:r[3],children:[]};ORDER.push(r[0]);NB[r[0]]=[];});
@@ -430,7 +430,7 @@ function parseLoc(loc){
 /* ---------- Turning predictions into trains ---------- */
 var raw=[], trains=new Map(), fetchedAt=0;
 function wordIdx(p){ // direction from the platform name: 0, 1 or -1 if unknown
-  var pl=String(p.platformName||"").toLowerCase(), w=LINE.words||[[LINE.dirs[0].toLowerCase(),0],[LINE.dirs[1].toLowerCase(),1]];
+  var pl=(String(p.platformName||"")+" "+String(p.direction||"")).toLowerCase(), w=LINE.words||[[LINE.dirs[0].toLowerCase(),0],[LINE.dirs[1].toLowerCase(),1]];
   for(var i=0;i<w.length;i++)if(pl.indexOf(w[i][0])>=0)return w[i][1];
   return -1;
 }
@@ -475,8 +475,33 @@ function routeHint(p,others){
   return "";
 }
 function fixSt(st,hint){return (st&&LINE.split&&LINE.split[st]&&hint)?LINE.split[st][hint]:st;}
+/* Feeds with neither train numbers nor locations (e.g. the DLR): rebuild trains from arrival times.
+   For each destination, a train whose next stop is S is one predicted at S that is not the same train
+   still to pass the station before S. Predictions at the previous station(s) are matched, earliest first,
+   to the next later prediction at S; whatever is left over at S is a train already past the previous station. */
+function inferTrains(list,best){
+  if(!list.length)return;
+  var groups={};
+  list.forEach(function(p){var d=p._dest||norm(p.destinationName||p.towards)||"?";var k=d+"|"+wordIdx(p);(groups[k]=groups[k]||[]).push(p);});
+  Object.keys(groups).forEach(function(k){
+    var at={};
+    groups[k].forEach(function(p){(at[p._st]=at[p._st]||[]).push(p);});
+    Object.keys(at).forEach(function(S){
+      var here=at[S].slice().sort(function(a,b){return a.timeToStation-b.timeToStation;});
+      var dest=here[0]._dest, hop=(dest&&dest!==S&&NH[S])?NH[S][dest]:null;
+      var before=[];
+      (NB[S]||[]).forEach(function(n){if(n!==hop&&at[n])before=before.concat(at[n]);});
+      before.sort(function(a,b){return a.timeToStation-b.timeToStation;});
+      var used=new Array(here.length);
+      before.forEach(function(q){
+        for(var i=0;i<here.length;i++)if(!used[i]&&here[i].timeToStation>q.timeToStation+40){used[i]=true;break;}
+      });
+      here.forEach(function(p,i){if(!used[i]&&p.timeToStation<900)best.set("~"+k+"|"+S+"|"+i,p);});
+    });
+  });
+}
 function ingest(list,at){
-  raw=[];var best=new Map(), byV={};
+  raw=[];var best=new Map(), byV={}, anon=[];
   if(LINE.split)list.forEach(function(p){var k=String(p.vehicleId||"").trim();if(k&&!/^0+$/.test(k))(byV[k]=byV[k]||[]).push(p);});
   list.forEach(function(p){
     var st=stationFrom(p.stationName); if(!st)return;
@@ -484,11 +509,12 @@ function ingest(list,at){
     p._st=st; p._dest=stationFrom(p.destinationName||p.towards||""); raw.push(p);
     var key=String(p.vehicleId||"").trim();
     if(!key||/^0+$/.test(key)){
-      if(!p.currentLocation)return;
+      if(!p.currentLocation){anon.push(p);return;}
       key="~"+norm(p.destinationName||p.towards)+"|"+wordIdx(p)+"|"+norm(p.currentLocation);
     }
     var b=best.get(key); if(!b||p.timeToStation<b.timeToStation)best.set(key,p);
   });
+  inferTrains(anon,best);
   trains=new Map(); best.forEach(function(p,key){trains.set(key,makeTrain(key,p));});
   fetchedAt=at;
 }
