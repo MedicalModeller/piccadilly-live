@@ -1,9 +1,9 @@
 <!doctype html>
 <!-- Tube Live (tube.trent-park.org) by TudorDesigns
-     Version: 29 October 2026. Tube (11 lines), Overground (6 lines) and DLR, with a switch between them; GoatCounter visit tracking (tudormodeller.goatcounter.com).
+     Version: 29 October 2026. Tube (11 lines), Overground (6 lines), DLR and Elizabeth line, with a switch between them; GoatCounter visit tracking (tudormodeller.goatcounter.com).
      Questions, ideas or bugs: https://github.com/MedicalModeller/tube-live/issues -->
-<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Live London Underground train positions on a tube-carriage style strip map for every London Underground, Overground and DLR line, with line status and next trains at every station."><link rel="canonical" href="https://tube.trent-park.org/"><meta property="og:title" content="Tube Live: live trains on every Tube, Overground and DLR line"><meta property="og:description" content="See every train on the line, live, on a strip map like the one in the carriage."><meta property="og:url" content="https://tube.trent-park.org/"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
-<title>Tube Live: live London Underground, Overground and DLR train map</title>
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Live London Underground train positions on a tube-carriage style strip map for every London Underground, Overground, DLR and Elizabeth line, with line status and next trains at every station."><link rel="canonical" href="https://tube.trent-park.org/"><meta property="og:title" content="Tube Live: live trains on every Tube, Overground, DLR and Elizabeth line"><meta property="og:description" content="See every train on the line, live, on a strip map like the one in the carriage."><meta property="og:url" content="https://tube.trent-park.org/"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>Tube Live: live Tube, Overground, DLR and Elizabeth line train map</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -340,6 +340,22 @@ var LINES={
       dirs:["Outbound","Inbound"],legend:["away from Bank and Tower Gateway","towards Bank and Tower Gateway"],labelUp:[],alias:[],
       sim:[["Bank","Lewisham",6],["Stratford","Lewisham",4],["Tower Gateway","Beckton",4],["Bank","Woolwich Arsenal",4],["Stratford International","Woolwich Arsenal",3]]};
   })(),
+  elizabeth:(function(){
+    var L=[];
+    chain(L,["Reading","Twyford","Maidenhead","Taplow","Burnham","Slough","Langley","Iver","West Drayton","Hayes & Harlington","Southall","Hanwell","West Ealing","Ealing Broadway","Acton Main Line","Paddington","Bond Street","Tottenham Court Road","Farringdon","Liverpool Street","Whitechapel"],0,1,0,null);
+    L.push([T23,10,-1,"Hayes & Harlington"],[T5,12,-1,T23],[T4,11,-1.9,T23]);
+    chain(L,["Stratford","Maryland","Forest Gate","Manor Park","Ilford","Seven Kings","Goodmayes","Chadwell Heath","Romford","Gidea Park","Harold Wood","Brentwood","Shenfield"],21,1,1,"Whitechapel");
+    chain(L,["Canary Wharf","Custom House","Woolwich","Abbey Wood"],21,1,-1,"Whitechapel");
+    var co={"Hayes & Harlington":["Southall",T23],"Whitechapel":["Stratford","Canary Wharf"]}; co[T23]=[T5,T4];
+    var hp={}; hp[T5]=[11,-1]; hp[T4]=[10,-1.8];
+    ["Stratford","Maryland","Forest Gate","Manor Park","Ilford","Seven Kings","Goodmayes","Chadwell Heath","Romford","Gidea Park","Harold Wood","Brentwood","Shenfield"].forEach(function(n,i){hp[n]=[21+i,-1];});
+    ["Canary Wharf","Custom House","Woolwich","Abbey Wood"].forEach(function(n,i){hp[n]=[21+i,-2];});
+    return {name:"Elizabeth",col:["#6950a1","#5a4390","#ffffff","#a08bd6"],stations:L,extra:[],childOrder:co,flip:true,vw:400,vcx:180,hpos:hp,hrow:90,
+      ic:["Reading","Slough",T23,T4,T5,"Ealing Broadway","Paddington","Bond Street","Tottenham Court Road","Farringdon","Liverpool Street","Whitechapel","Stratford","Romford","Shenfield","Canary Wharf","Custom House","Woolwich","Abbey Wood"],
+      dirs:["Eastbound","Westbound"],legend:["to Abbey Wood and Shenfield","to Reading and Heathrow"],labelUp:[],
+      alias:[["heathrow terminals 2 and 3",T23],["heathrow terminals 2 3",T23],["heathrow terminal 2 and 3",T23],["heathrow terminals 123",T23],["heathrow t2 and 3",T23],["terminals 2 and 3",T23],["heathrow t4",T4],["terminal 4",T4],["heathrow t5",T5],["terminal 5",T5]],
+      sim:[["Reading","Abbey Wood",4],["Heathrow Terminal 5","Abbey Wood",4],["Paddington","Shenfield",5],["Heathrow Terminal 4","Shenfield",2],["Maidenhead","Shenfield",2]]};
+  })(),
   central:(function(){
     var L=[];
     chain(L,["Epping","Theydon Bois","Debden","Loughton","Buckhurst Hill","Woodford"],0,1,1,null);
@@ -360,7 +376,8 @@ function short(n){return SHORT[n]||n;}
 var MODES=[
   {id:"tube",name:"Tube",lines:["bakerloo","central","circle","district","hammersmith-city","jubilee","metropolitan","northern","piccadilly","victoria","waterloo-city"]},
   {id:"overground",name:"Overground",lines:["liberty","lioness","mildmay","suffragette","weaver","windrush"]},
-  {id:"dlr",name:"DLR",lines:["dlr"]}];
+  {id:"dlr",name:"DLR",lines:["dlr"]},
+  {id:"elizabeth",name:"Elizabeth",lines:["elizabeth"]}];
 var LINE_ORDER=[], MODE_OF={};
 MODES.forEach(function(m){m.lines.forEach(function(id){LINE_ORDER.push(id);MODE_OF[id]=m.id;});});
 (function(){
